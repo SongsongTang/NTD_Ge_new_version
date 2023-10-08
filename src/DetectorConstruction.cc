@@ -216,11 +216,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4double CusizeY = PCBsizeY;
 	G4double CudeltaY = PCBdeltaY;
 	// G4double Cuthickness = 10e-4*cm;
-	G4double Cuthickness = 40e-4*cm;
+	G4double Cuthickness = 10e-4*cm;
 	
 	// parameter of the Cu board below TPC
 	G4double gap = 2*cm;
-	G4double Cuthickness2 = 1*cm;
+	G4double Cuthickness2 = 0.5*cm;
 
 	// parameter of the field cage
 	G4double FieldCageSize = 17*cm;
@@ -231,10 +231,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4double source_radius = 1*cm;
 
 	G4double ShellSize = 30*cm;
-	G4double ShellThickness = 1*cm;
+	G4double ShellThickness = 2.5*cm;
 	G4double ShellHeight = 7*cm;
 
-	G4double Cuthickness3 = 1*cm;
+	G4double Cuthickness3 = 2.5*cm;
 	
 /*
 */
@@ -291,52 +291,52 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //=======Copper board above anti-coincident detector (if exists)=====================
 
-	// G4ThreeVector positionCubrd3 = G4ThreeVector(0., CudeltaY, PCBthickness+Cuthickness+PCBthickness+MMGasThickness+gap);	
+	G4ThreeVector positionCubrd3 = G4ThreeVector(0., CudeltaY, PCBthickness+Cuthickness+PCBthickness+MMGasThickness+gap);	
 
-	// G4Box* solidCubrd3 = new G4Box("Cu_board3",                                    // its name
-	// 		0.5*CusizeX*1.2, 0.5*CusizeY*1.2, 0.5*Cuthickness3);                      // its size
+	G4Box* solidCubrd3 = new G4Box("Cu_board3",                                    // its name
+			0.5*CusizeX*1.2, 0.5*CusizeY*1.2, 0.5*Cuthickness3);                      // its size
 
-	// G4LogicalVolume* logicCubrd3 = new G4LogicalVolume(
-	// 		solidCubrd3,                                    // its solid
-	// 		Cu,                                    // its material
-	// 		"Cu_board3");                                      // its name
+	G4LogicalVolume* logicCubrd3 = new G4LogicalVolume(
+			solidCubrd3,                                    // its solid
+			Cu,                                    // its material
+			"Cu_board3");                                      // its name
 
-	// new G4PVPlacement(
-	// 		0,                                           // no rotation
-	// 		positionCubrd3,                                 // at (0,0,0)
-	// 		logicCubrd3,                                    // its logical volume
-	// 		"Cu_board3",                                       // its name
-	// 		logicWorld,                                  // its mother  volume
-	// 		false,                                       // no boolean operation
-	// 		0);                                          // copy number
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionCubrd3,                                 // at (0,0,0)
+			logicCubrd3,                                    // its logical volume
+			"Cu_board3",                                       // its name
+			logicWorld,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
 
 //=============================================
 
 //=============Added part: a copper shell around the TPC ==================
 
-	// G4ThreeVector positionShell = G4ThreeVector(0., 0., -0.5*ShellHeight+(PCBthickness+Cuthickness+PCBthickness+MMGasThickness+gap-0.5*Cuthickness3));		//(0,0,-3.35)cm center, top at z=0
+	G4ThreeVector positionShell = G4ThreeVector(0., 0., -0.5*ShellHeight+(PCBthickness+Cuthickness+PCBthickness+MMGasThickness+gap-0.5*Cuthickness3));		//(0,0,-3.35)cm center, top at z=0
 
-	// G4Box* solidShellOut = new G4Box("ShellOut",                                    // its name
-	// 		0.5*CusizeX*1.2, 0.5*CusizeY*1.2, 0.5*ShellHeight);                      // its size
+	G4Box* solidShellOut = new G4Box("ShellOut",                                    // its name
+			0.5*CusizeX*1.2, 0.5*CusizeY*1.2, 0.5*ShellHeight);                      // its size
 	
-	// G4Box* solidShellIn = new G4Box("ShellIn",                                    // its name
-	// 		0.5*CusizeX*1.2-ShellThickness, 0.5*CusizeY*1.2-ShellThickness, 0.5*ShellHeight);                      // its size
+	G4Box* solidShellIn = new G4Box("ShellIn",                                    // its name
+			0.5*CusizeX*1.2-ShellThickness, 0.5*CusizeY*1.2-ShellThickness, 0.5*ShellHeight);                      // its size
 
-	// G4SubtractionSolid* solidShell = new G4SubtractionSolid("CuShell",solidShellOut,solidShellIn);
+	G4SubtractionSolid* solidShell = new G4SubtractionSolid("CuShell",solidShellOut,solidShellIn);
 	
-	// G4LogicalVolume* logicShell = new G4LogicalVolume(
-	// 		solidShell,                                    // its solid
-	// 		Cu,                                    // its material
-	// 		"CuShell");                                      // its name
+	G4LogicalVolume* logicShell = new G4LogicalVolume(
+			solidShell,                                    // its solid
+			Cu,                                    // its material
+			"CuShell");                                      // its name
 
-	// new G4PVPlacement(
-	// 		0,                                           // no rotation
-	// 		positionShell,                                 // at (0,0,0)
-	// 		logicShell,                                    // its logical volume
-	// 		"CuShell",                                       // its name
-	// 		logicWorld,                                  // its mother  volume
-	// 		false,                                       // no boolean operation
-	// 		0);                                          // copy number
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionShell,                                 // at (0,0,0)
+			logicShell,                                    // its logical volume
+			"CuShell",                                       // its name
+			logicWorld,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
 
 //==============================================================
 

@@ -120,7 +120,9 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
     // fTrackEdepInSource=0.;
     // fTrackEdepInGas=0.;
     fTracklenInSV = 0.;
+    fTracklenInMM = 0.;
     fTrackEnergyInSV = 0.;
+    fTrackEnergyInMM = 0.;
     MinPosition[0]= 100*cm;
     MaxPosition[0] = -100*cm;
     MinPosition[1]= 100*cm;
@@ -210,7 +212,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
     if(KinEnergy_start < 10*keV || name != "e-") fInScoringVolume1 = false;
     // if(KinEnergy_start < 10*keV || (name != "mu+" && name != "mu-")) fInScoringVolume1 = false;         // for cosmic ray simulation
     // if(ID!=1) fInScoringVolume1 = false;                //Test: only save primary beta tracks (for run12_2 only)!
-    if(parentID!=1 && parentID!=2) fInScoringVolume1 = false;           //Test2: only save Sr90/Y90 decay primary betas (for Sr90 beta source run only)!
+    // if(parentID!=1 && parentID!=2) fInScoringVolume1 = false;           //Test2: only save Sr90/Y90 decay primary betas (for Sr90 beta source run only)!
 
 }
 
@@ -321,11 +323,13 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
             fParticleInfo_Tracking.fStartPosX.push_back(x_pos);
             fParticleInfo_Tracking.fStartPosY.push_back(y_pos);
             fParticleInfo_Tracking.fTrackLength.push_back(fTracklenInSV);
+            fParticleInfo_Tracking.fTrackLength_MM.push_back(fTracklenInMM);
             fParticleInfo_Tracking.fXTrackLength.push_back(MaxPosition[0]-MinPosition[0]);
             fParticleInfo_Tracking.fYTrackLength.push_back(MaxPosition[1]-MinPosition[1]);
             fParticleInfo_Tracking.fDriftDistance.push_back(MaxPosition[2]-MinPosition[2]);
             fParticleInfo_Tracking.fCotTheta.push_back((MaxPosition[2]-MinPosition[2])/(sqrt((MaxPosition[0]-MinPosition[0])*(MaxPosition[0]-MinPosition[0])+(MaxPosition[1]-MinPosition[1])*(MaxPosition[1]-MinPosition[1]))));
             fParticleInfo_Tracking.fTrackEnergy.push_back(fTrackEnergyInSV);
+            fParticleInfo_Tracking.fTrackEnergy_MM.push_back(fTrackEnergyInMM);
             fParticleInfo_Tracking.fMaxEdepPosition.push_back(MaxEdepPos/fTracklenInSV);
             fParticleInfo_Tracking.fMaxEdepPositionZ.push_back((MaxPosition[2]-MaxEdepPosZ)/(MaxPosition[2]-MinPosition[2]));
             //Fill the track points information from the "fTrackInfo_Stepping" class

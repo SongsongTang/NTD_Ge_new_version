@@ -82,11 +82,13 @@ public:
     fHistoManager_Event->fParticleInfo.fStartPosX.push_back(fParticleInfo_Event->fStartPosX.back());
     fHistoManager_Event->fParticleInfo.fStartPosY.push_back(fParticleInfo_Event->fStartPosY.back());
     fHistoManager_Event->fParticleInfo.fTrackLength.push_back(fParticleInfo_Event->fTrackLength.back());
+    fHistoManager_Event->fParticleInfo.fTrackLength_MM.push_back(fParticleInfo_Event->fTrackLength_MM.back());
     fHistoManager_Event->fParticleInfo.fDriftDistance.push_back(fParticleInfo_Event->fDriftDistance.back());
     fHistoManager_Event->fParticleInfo.fXTrackLength.push_back(fParticleInfo_Event->fXTrackLength.back());
     fHistoManager_Event->fParticleInfo.fYTrackLength.push_back(fParticleInfo_Event->fYTrackLength.back());
     fHistoManager_Event->fParticleInfo.fCotTheta.push_back(fParticleInfo_Event->fCotTheta.back());
     fHistoManager_Event->fParticleInfo.fTrackEnergy.push_back(fParticleInfo_Event->fTrackEnergy.back());
+    fHistoManager_Event->fParticleInfo.fTrackEnergy_MM.push_back(fParticleInfo_Event->fTrackEnergy_MM.back());
     fHistoManager_Event->fParticleInfo.fMaxEdepPosition.push_back(fParticleInfo_Event->fMaxEdepPosition.back());
     fHistoManager_Event->fParticleInfo.fMaxEdepPositionZ.push_back(fParticleInfo_Event->fMaxEdepPositionZ.back());
 

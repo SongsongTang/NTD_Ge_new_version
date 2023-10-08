@@ -166,6 +166,13 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
         fTrackingAction->AddStepInfo(stepVertexPos, dE_dx, fTrackingAction->GetTrackLenInSV());
       }
     }
+    else if(preVolumeName == "GasEff2") {
+      //this means the step is in the anti-coincidence MM
+      G4double TotalEneTransfer = aStep->GetPreStepPoint()->GetKineticEnergy() - aStep->GetPostStepPoint()->GetKineticEnergy();
+
+      fTrackingAction->AddTracklen_MMVolume(steplen);
+      fTrackingAction->AddTrackEdep_MM(TotalEneTransfer);
+    }
   }
 
 

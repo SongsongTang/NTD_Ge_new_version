@@ -189,11 +189,13 @@ void HistoManager::book()
   fNtuple->Branch("StartPosX",              &fParticleInfo.fStartPosX);
   fNtuple->Branch("StartPosY",              &fParticleInfo.fStartPosY);
   fNtuple->Branch("TrackLength",              &fParticleInfo.fTrackLength);
+  fNtuple->Branch("TrackLength_MM",              &fParticleInfo.fTrackLength_MM);
   fNtuple->Branch("XTrackLength",              &fParticleInfo.fXTrackLength);
   fNtuple->Branch("YTrackLength",              &fParticleInfo.fYTrackLength);
   fNtuple->Branch("DriftDistance",              &fParticleInfo.fDriftDistance);
   fNtuple->Branch("CotTheta",              &fParticleInfo.fCotTheta);
   fNtuple->Branch("TrackEnergy",              &fParticleInfo.fTrackEnergy);
+  fNtuple->Branch("TrackEnergy_MM",              &fParticleInfo.fTrackEnergy_MM);
   fNtuple->Branch("MaxEdepPosition",              &fParticleInfo.fMaxEdepPosition);
   fNtuple->Branch("MaxEdepPositionZ",             &fParticleInfo.fMaxEdepPositionZ);
 

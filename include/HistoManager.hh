@@ -71,11 +71,13 @@ public:
   std::vector<G4double> fStartPosX;
   std::vector<G4double> fStartPosY;
   std::vector<G4double> fTrackLength;
+  std::vector<G4double> fTrackLength_MM;
   std::vector<G4double> fDriftDistance;
   std::vector<G4double> fXTrackLength;            //the track length projected onto x axis
   std::vector<G4double> fYTrackLength;            //the track length projected onto y axis
   std::vector<G4double> fCotTheta;                //cotangent of the incident angle
   std::vector<G4double> fTrackEnergy;
+  std::vector<G4double> fTrackEnergy_MM;
   std::vector<G4double> fMaxEdepPosition;
   std::vector<G4double> fMaxEdepPositionZ;
   std::vector<std::vector<G4double> > fTrackStartPos;
@@ -112,11 +114,13 @@ public:
     fStartPosX.clear();
     fStartPosY.clear();
     fTrackLength.clear();
+    fTrackLength_MM.clear();
     fDriftDistance.clear();
     fXTrackLength.clear();
     fYTrackLength.clear();
     fCotTheta.clear();
     fTrackEnergy.clear();
+    fTrackEnergy_MM.clear();
     fMaxEdepPosition.clear();
     fMaxEdepPositionZ.clear();
 
@@ -157,11 +161,13 @@ public:
     fStartPosX.clear();
     fStartPosY.clear();
     fTrackLength.clear();
+    fTrackLength_MM.clear();
     fDriftDistance.clear();
     fXTrackLength.clear();
     fYTrackLength.clear();
     fCotTheta.clear();
     fTrackEnergy.clear();
+    fTrackEnergy_MM.clear();
     fMaxEdepPosition.clear();
     fMaxEdepPositionZ.clear();
 

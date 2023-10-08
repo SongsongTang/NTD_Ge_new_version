@@ -101,6 +101,10 @@ class TrackingAction : public G4UserTrackingAction {
       fTracklenInSV += len;
       return;
     }
+    void AddTracklen_MMVolume(G4double len){
+      fTracklenInMM += len;
+      return;
+    }
     void AddStepInfo(G4ThreeVector stepVertexPos, G4double dE_dx, G4double length){
       fTrackInfo_Stepping.fStepVertexPosX.push_back(stepVertexPos.x());
       fTrackInfo_Stepping.fStepVertexPosY.push_back(stepVertexPos.y());
@@ -112,7 +116,12 @@ class TrackingAction : public G4UserTrackingAction {
       fTrackEnergyInSV += edep;
       return;
     }
+    void AddTrackEdep_MM(G4double edep){
+      fTrackEnergyInMM += edep;
+      return;
+    }
     G4double GetTrackLenInSV(){return fTracklenInSV;}
+    G4double GetTrackLenInMM(){return fTracklenInMM;}
   
 
 
@@ -130,7 +139,9 @@ class TrackingAction : public G4UserTrackingAction {
   // G4double fTrackEdepInPET;
   // G4double fTrackEdepInGas;
   G4double fTracklenInSV;
+  G4double fTracklenInMM;
   G4double fTrackEnergyInSV;
+  G4double fTrackEnergyInMM;
   G4bool   fFullChain;
   G4bool fInScoringVolume1;
   G4bool fInScoringVolume2;
