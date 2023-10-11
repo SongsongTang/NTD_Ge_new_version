@@ -51,6 +51,8 @@
 #include "math.h"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+using namespace TPCsystem;
+
 TrackingAction::TrackingAction(RunAction*runAct,EventAction* EA,HistoManager* histo)
     :G4UserTrackingAction(),
     fRun(runAct),fEvent(EA),fHistoManager_Track(histo),fTrackMessenger(0),
@@ -81,6 +83,9 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
        */   
     TrackStartPos.clear();          //reset the track start position
     EventStartPos.clear();
+
+    //added on 2023.10.09, for digitization
+    fDigitization = true;
 
     G4ParticleDefinition* particle = track->GetDefinition();
     G4String name   = particle->GetParticleName();
@@ -380,6 +385,12 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
             fEvent->AddTrackParentID(track->GetParentID());
 
             // fEvent->UpdateParticleInfo(&fParticleInfo_Tracking);
+
+            //added on 2023.10.10, to fill the digitized waveform and data
+            if(fDigitization) {
+                ClearChannelBuffer();
+                FillChannelWaveforms();
+            }
         }
 
     }
@@ -393,6 +404,83 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
     // ParentTrackParticleName = track->GetDefinition()->GetParticleName();
     // ParentID = track->GetTrackID();
 
+}
+
+void TrackingAction::FillChannelWaveforms()
+{
+    double minT_x = time_X[0][0]; // 假设初始最小值为二维向量的第一个元素
+
+    // 遍历二维向量
+    for (int row = 0; row < time_X.size(); ++row) {
+        for (int col = 0; col < time_X[row].size(); ++col) {
+            if (time_X[row][col] < minT_x) {
+                minT_x = time_X[row][col];
+            }
+        }
+    }
+
+    double minT_y = time_Y[0][0]; // 假设初始最小值为二维向量的第一个元素
+
+    // 遍历二维向量
+    for (int row = 0; row < time_Y.size(); ++row) {
+        for (int col = 0; col < time_Y[row].size(); ++col) {
+            if (time_Y[row][col] < minT_y) {
+                minT_y = time_Y[row][col];
+            }
+        }
+    }
+
+    double minT = (minT_x<minT_y?minT_x,minT_y);
+
+    if(charge_X.size()!=time_X.size() || charge_Y.size()!=time_Y.size()){
+        std::cout<<"Error: The size of charge and time vector is not equal!"<<std::endl;
+        continue;
+    }
+    for(int i=0;i<nch;i++){
+        if(charge_X.size()>0){
+            for(int j=0;j<charge_X.size();j++){
+                //this "-60" term is to ensure the first arrived signal to sit near 100 time point
+                int time_bin_start = (int)((time_X[i][j]-minT)/40)-60;
+                //fill the waveform of this channel
+                for(int ADC=0;ADC<Nsp;ADC++){
+                    if(time_bin_start<0) waveform_X[i][ADC]+=0;
+                    else waveform_X[i][ADC] += 200*gain*charge_X[i][j]*response_func[time_bin_start];
+                    time_bin_start++;
+                }
+            }
+            //this process is to ensure the first point of a valid waveform is always non zero,
+            // which is convinient for later filling data
+            if(waveform_X[i][0]==0) waveform_X[i][0]=-1;
+            //save the waveform in int format also
+            for(int k=0;k<Nsp;k++){
+                waveform_X_int[i][k] = static_cast<int>(waveform_X[i][k]);
+            }
+        }
+
+        if(charge_Y.size()>0){
+            for(int j=0;j<charge_Y.size();j++){
+                int time_bin_start = (int)((time_Y[i][j]-minT)/40)-60;
+                //fill the waveform of this channel
+                for(int ADC=0;ADC<Nsp;ADC++){
+                    if(time_bin_start<0) waveform_Y[i][ADC]+=0;
+                    else waveform_Y[i][ADC] += 200*gain*charge_Y[i][j]*response_func[time_bin_start];
+                    time_bin_start++;
+                }
+            }
+            //this process is to ensure the first point of a valid waveform is always non zero,
+            // which is convinient for later filling data
+            if(waveform_Y[i][0]==0) waveform_Y[i][0]=-1;
+            //save the waveform in int format also
+            for(int k=0;k<Nsp;k++){
+                waveform_Y_int[i][k] = static_cast<int>(waveform_Y[i][k]);
+            }
+        }
+    }
+    // //using float form of the waveform
+    // fHistoManager_Track->SaveRawRootData(waveform_X,waveform_Y);
+
+    //using int form of the waveform
+    fHistoManager_Track->SaveRawRootData(waveform_X_int,waveform_Y_int);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -29,7 +29,7 @@
 //
 // $Id: SteppingAction.cc 68015 2013-03-13 13:27:27Z gcosmo $
 //
-// 
+//
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -44,18 +44,18 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 //
-SteppingAction* SteppingAction::fgInstance =0;
-SteppingAction* SteppingAction::Instance()
+SteppingAction *SteppingAction::fgInstance = 0;
+SteppingAction *SteppingAction::Instance()
 {
   // G4cout<<"<<------------SteppingAction::Instance()-------------------->>"<<G4endl;
   return fgInstance;
 }
 //
-SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* event, TrackingAction* tracking) 
-  : G4UserSteppingAction(),
-    fDetector(det),
-    fEventAction(event), 
-    fTrackingAction(tracking)                                         
+SteppingAction::SteppingAction(DetectorConstruction *det, EventAction *event, TrackingAction *tracking)
+    : G4UserSteppingAction(),
+      fDetector(det),
+      fEventAction(event),
+      fTrackingAction(tracking)
 {
   // G4cout<<"<<------------SteppingAction::SteppingAction(DetectorConstruction* det,TrackingAction* tracking) -------------------->>"<<G4endl;
   fgInstance = this;
@@ -66,62 +66,63 @@ SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* event, Tr
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 SteppingAction::~SteppingAction()
-{ 
-//  G4cout<<"<<------------SteppingAction::~SteppingAction()-------------------->>"<<G4endl;
+{
+  //  G4cout<<"<<------------SteppingAction::~SteppingAction()-------------------->>"<<G4endl;
   fgInstance = 0;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SteppingAction::UserSteppingAction(const G4Step* aStep)
+void SteppingAction::UserSteppingAction(const G4Step *aStep)
 {
   // G4cout<<"<<------------SteppingAction::UserSteppingAction(const G4Step* aStep)-------------------->>"<<G4endl;
   // get volume of the current step
-  G4String preVolumeName 
-    = aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName();
+  G4String preVolumeName = aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName();
 
   // if(preVolumeName != "collimation" && preVolumeName != "source" && preVolumeName != "Hole1" && preVolumeName != "PET" && preVolumeName != "Gas")
   //   return;
-  
+
   // collect energy and track length step by step
   G4double edep = aStep->GetTotalEnergyDeposit();
   G4double steplen = aStep->GetStepLength();
-
-
 
   /*
   if(edep>0 && preVolumeName == "collimation"){
     fTrackingAction->AddEdep_CuCollimation(edep);
   }
-  
-	
-	if(edep>0 && preVolumeName == "Hole1"){
+
+
+  if(edep>0 && preVolumeName == "Hole1"){
     fTrackingAction->AddEdep_Hole1(edep);
   }
 */
 
-	// if(edep>0 && preVolumeName == "PET"){
+  // if(edep>0 && preVolumeName == "PET"){
   //   fTrackingAction->AddEdep_PET(edep);
   // }
-	// if(edep>0 && preVolumeName == "source"){
+  // if(edep>0 && preVolumeName == "source"){
   //   fTrackingAction->AddEdep_Source(edep);
-  // } 
+  // }
 
-	// if(edep>0 && preVolumeName == "Gas"){
+  // if(edep>0 && preVolumeName == "Gas"){
   //   fTrackingAction->AddEdep_Gas(edep);
   // }
 
-  //add this steps' energy lost if it is in the Effective Gas volume
-  if(preVolumeName == "GasEff"){
+  // add this steps' energy lost if it is in the Effective Gas volume
+  if (preVolumeName == "GasEff")
+  {
     fEventAction->AddEdep_ScoringVolume(edep);
   }
 
-  //NEW PART: if this step does NOT begin in the scoring volume, drops it
-  if(fTrackingAction->GetVolumeFlag1()){ 
-    //if the previous tracks are ALL NOT in the periphery volume and the anticoincident MM region
-    if(preVolumeName == "Gas" || preVolumeName == "GasEff2")  fTrackingAction->SetVolumeFlag1(false);   //this means the track get into the frame
-    if(preVolumeName == "GasEff")  {
-      fTrackingAction->SetVolumeFlag2(true);        //this means this track get into the gas volume
+  // NEW PART: if this step does NOT begin in the scoring volume, drops it
+  if (fTrackingAction->GetVolumeFlag1())
+  {
+    // if the previous tracks are ALL NOT in the periphery volume and the anticoincident MM region
+    if (preVolumeName == "Gas" || preVolumeName == "GasEff2")
+      fTrackingAction->SetVolumeFlag1(false); // this means the track get into the frame
+    if (preVolumeName == "GasEff")
+    {
+      fTrackingAction->SetVolumeFlag2(true); // this means this track get into the gas volume
 
       // //Add secondary particles' energy
       // G4TrackVector* trackvector = astep->GetSecondary();
@@ -129,56 +130,113 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
       //   fTrackingAction->AddEdep_ScoringVolume(trackvector[i]->GetKineticEnergy());
       // }
 
-      
-
-      //record the step points of this track
+      // record the step points of this track
       G4ThreeVector stepVertexPos = aStep->GetPreStepPoint()->GetPosition();
-      //calculate the total energy transfer in this step, including the energy transferred to secondaries
+      // calculate the total energy transfer in this step, including the energy transferred to secondaries
       G4double TotalEneTransfer = aStep->GetPreStepPoint()->GetKineticEnergy() - aStep->GetPostStepPoint()->GetKineticEnergy();
-      
+
       fTrackingAction->AddTracklen_ScoringVolume(steplen);
       fTrackingAction->AddTrackEdep_SV(TotalEneTransfer);
 
-      //this part sum the edep until the length is long enough, then fill
+      // this part sum the edep until the length is long enough, then fill
       fEdep += TotalEneTransfer;
       fStepLen += steplen;
-      if(fStepLen > 0.5*mm || aStep->GetPostStepPoint()->GetKineticEnergy()==0){
-        G4double dE_dx = fEdep/fStepLen;
-        fEdep = 0;        //reset
-        fStepLen = 0;     //reset
-        //Get the total track length until this step
-        // G4double TotalTrackLen = aStep->GetTrack()->GetTrackLength();
+      if (fStepLen > 0.5 * mm || aStep->GetPostStepPoint()->GetKineticEnergy() == 0)
+      {
+        G4double dE_dx = fEdep / fStepLen;
+        fEdep = 0;    // reset
+        fStepLen = 0; // reset
+        // Get the total track length until this step
+        //  G4double TotalTrackLen = aStep->GetTrack()->GetTrackLength();
 
-        if(stepVertexPos.x()>fTrackingAction->MaxPosition[0]) fTrackingAction->MaxPosition[0] = stepVertexPos.x();
-        if(stepVertexPos.x()<fTrackingAction->MinPosition[0]) fTrackingAction->MinPosition[0] = stepVertexPos.x();
-        if(stepVertexPos.y()>fTrackingAction->MaxPosition[1]) fTrackingAction->MaxPosition[1] = stepVertexPos.y();
-        if(stepVertexPos.y()<fTrackingAction->MinPosition[1]) fTrackingAction->MinPosition[1] = stepVertexPos.y();
-        if(stepVertexPos.z()>fTrackingAction->MaxPosition[2]) fTrackingAction->MaxPosition[2] = stepVertexPos.z();
-        if(stepVertexPos.z()<fTrackingAction->MinPosition[2]) fTrackingAction->MinPosition[2] = stepVertexPos.z();
+        if (stepVertexPos.x() > fTrackingAction->MaxPosition[0])
+          fTrackingAction->MaxPosition[0] = stepVertexPos.x();
+        if (stepVertexPos.x() < fTrackingAction->MinPosition[0])
+          fTrackingAction->MinPosition[0] = stepVertexPos.x();
+        if (stepVertexPos.y() > fTrackingAction->MaxPosition[1])
+          fTrackingAction->MaxPosition[1] = stepVertexPos.y();
+        if (stepVertexPos.y() < fTrackingAction->MinPosition[1])
+          fTrackingAction->MinPosition[1] = stepVertexPos.y();
+        if (stepVertexPos.z() > fTrackingAction->MaxPosition[2])
+          fTrackingAction->MaxPosition[2] = stepVertexPos.z();
+        if (stepVertexPos.z() < fTrackingAction->MinPosition[2])
+          fTrackingAction->MinPosition[2] = stepVertexPos.z();
 
-        if(dE_dx>(fTrackingAction->MaxEdep)){ 
+        if (dE_dx > (fTrackingAction->MaxEdep))
+        {
           fTrackingAction->MaxEdep = dE_dx;
           fTrackingAction->MaxEdepPos = fTrackingAction->GetTrackLenInSV();
           fTrackingAction->MaxEdepPosZ = stepVertexPos.z();
         }
 
-        //record step informations: the step points of this track, the tracklen & dE/dx, for plotting
+        // record step informations: the step points of this track, the tracklen & dE/dx, for plotting
         fTrackingAction->AddStepInfo(stepVertexPos, dE_dx, fTrackingAction->GetTrackLenInSV());
       }
+
+      // added part on 2023.10.09, to implement the process of digitization
+      // using the XY plane projected position of the step and its energy deposition to get the hit strip and recored it.
+      if (fTrackingAction->fDigitization)
+      {
+        DriftOneElectron(stepVertexPos, edep);
+      }
     }
-    else if(preVolumeName == "GasEff2") {
-      //this means the step is in the anti-coincidence MM
+    else if (preVolumeName == "GasEff2")
+    {
+      // this means the step is in the anti-coincidence MM
       G4double TotalEneTransfer = aStep->GetPreStepPoint()->GetKineticEnergy() - aStep->GetPostStepPoint()->GetKineticEnergy();
 
       fTrackingAction->AddTracklen_MMVolume(steplen);
       fTrackingAction->AddTrackEdep_MM(TotalEneTransfer);
     }
   }
-
-
 }
- 
+
 void SteppingAction::Reset()
-{}
+{
+}
+
+void SteppingAction::DriftOneElectron(G4ThreeVector steppos, G4double edep)
+{
+  // the diffusion effect during drifting can be added later
+  double projected_x = steppos.x();
+  double projected_y = steppos.y();
+  double velocity = fTrackingAction->v_drift;
+
+  // double x_inplane = projected_x + fTrackingAction->nch/2*fTrackingAction->chnwidth;
+  // double y_inplane = projected_y + fTrackingAction->nch/2*fTrackingAction->chnwidth;
+
+  // change the coordinate system for simplier mapping
+  double x_rot = sqrt(2) / 2 * (projected_x - projected_y);
+  double y_rot = sqrt(2) / 2 * (projected_x + projected_y);
+
+  int x_pos = (int)(x_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) / (sqrt(2) / 2 * fTrackingAction->chnwidth);
+  if ((x_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) < 0)
+    x_pos = x_pos - 1;
+  int y_pos = (int)(y_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) / (sqrt(2) / 2 * fTrackingAction->chnwidth);
+  if ((y_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) < 0)
+    y_pos = y_pos - 1;
+
+  int chn;
+  if ((x_pos + y_pos) % 2 == 0)
+  {
+    // this means it's on a x strip
+    chn = (x_pos - y_pos) / 2 + fTrackingAction->nch / 2;
+    if (chn >= 0 && chn < fTrackingAction->nch)
+    {
+      fTrackingAction->charge_X[chn].push_back(edep*1e6/E_ion);
+      fTrackingAction->time_X[chn].push_back(-steppos.z() / velocity * 100); // mm/(cm/us)*100--> ns
+    }
+  }
+  else
+  {
+    // this means it's on a y strip
+    chn = (y_pos + x_pos - 1) / 2 + fTrackingAction->nch / 2;
+    if (chn >= 0 && chn < fTrackingAction->nch)
+    {
+      fTrackingAction->charge_Y[chn].push_back(edep*1e6/E_ion);
+      fTrackingAction->time_Y[chn].push_back(-steppos.z() / velocity * 100); // mm/(cm/us)*100--> ns
+    }
+  }
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

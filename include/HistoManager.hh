@@ -36,6 +36,11 @@
 #include <vector>
 #include "g4root.hh"
 #include <G4ThreeVector.hh>
+#include "Constant.h"
+
+
+using namespace std;
+using namespace TPCsystem;
 
 class TTree;
 class TFile;
@@ -209,6 +214,49 @@ public:
   }
 };
 
+//New class: added on 2023.10.09, variables for digitization output
+class RawRootData
+{
+public:
+  int event=0;
+  int nHits=0;
+  int Fec[Tch];
+  int Chip[Tch];
+  int Chn[Tch];
+  int ADC[Tch][Nsp];
+  float maxADC[Tch];
+  float maxPoint[Tch];
+  int pixelX[Tch];
+  int pixelY[Tch];
+  
+  void reset()
+  {
+    // event=0;             //event number is not reset in the entire run, so that the output event is like: 0, 1, 2, 3, ...
+    nHits=0;
+    memset(Fec,0,sizeof(Fec));
+    memset(Chip,0,sizeof(Chip));
+    memset(Chn,0,sizeof(Chn));
+    memset(ADC,0,sizeof(ADC));
+    memset(maxADC,0,sizeof(maxADC));
+    memset(maxPoint,0,sizeof(maxPoint));
+    memset(pixelX,0,sizeof(pixelX));
+    memset(pixelY,0,sizeof(pixelY));
+  };
+
+  RawRootData(){
+    event=0;
+    nHits=0;
+    memset(Fec,0,sizeof(Fec));
+    memset(Chip,0,sizeof(Chip));
+    memset(Chn,0,sizeof(Chn));
+    memset(ADC,0,sizeof(ADC));
+    memset(maxADC,0,sizeof(maxADC));
+    memset(maxPoint,0,sizeof(maxPoint));
+    memset(pixelX,0,sizeof(pixelX));
+    memset(pixelY,0,sizeof(pixelY));
+  }
+};
+
 class HistoManager
 {
 public:
@@ -217,7 +265,9 @@ public:
   void save();
   void book();
   void FillTrackGraph(TrackInfo*, G4int, G4int);
+  void SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch][Nsp]);
   ParticleInfo fParticleInfo;
+  RawRootData fRawRootData;
 private:
   
   void Book();
@@ -225,7 +275,9 @@ private:
 public:  
   TFile* fRootFile;
   TFile* fGraphRootFile;
+  TFile* fRawRootFile;
   TTree* fNtuple;
+  TTree* fNtuple2;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -37,6 +37,8 @@
 #include <TGraph.h>
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+using namespace TPCsystem;
+
 HistoManager::HistoManager()
   : fFileName("NTD_Ge"),fRootFile(0),fNtuple(0)
 {
@@ -150,16 +152,18 @@ void HistoManager::book()
 
   // to satisfy the condition that the file is in a sub directory
   size_t pos = fFileName.find("/");
-  G4String datafile_name, trackfile_name;
+  G4String datafile_name, trackfile_name, rawrootfile_name;
   if(pos!=std::string::npos){
     G4String firstpart  = fFileName.substr(0,pos);
     G4String secondpart = fFileName.substr(pos+1);
     datafile_name = firstpart+"/tree_"+secondpart+".root";
     trackfile_name = firstpart+"/tracks_"+secondpart+".root";
+    rawrootfile_name = firstpart+"/Rawroot_"+secondpart+".root";
   }
   else{
     datafile_name = "tree_"+fFileName+".root";
     trackfile_name = "tracks_"+fFileName+".root";
+    rawrootfile_name = "Rawroot_"+fFileName+".root";
   }
   
   fRootFile = new TFile(datafile_name,"RECREATE");
@@ -207,6 +211,23 @@ void HistoManager::book()
   fNtuple->Branch("TrackdE_dx_per_step",           &fParticleInfo.fTrackdE_dx_per_step);
   fNtuple->Branch("TrackLength_per_step",          &fParticleInfo.fTrackLength_per_step);
 
+  //added on 2023.10.09, tree for digitization output
+  fRawRootFile = new TFile(rawrootfile_name,"RECREATE");
+  fNtuple2 = new TTree("richraw","richraw");
+  fNtuple2->Branch("event",&fRawRootData.event,"event/I");
+  fNtuple2->Branch("nHits",&fRawRootData.nHits,"nHits/I");
+  fNtuple2->Branch("Fec",fRawRootData.Fec,"Fec[nHits]/I");
+  fNtuple2->Branch("Chip",fRawRootData.Chip,"Chip[nHits]/I");
+  fNtuple2->Branch("Chn",fRawRootData.Chn,"Chn[nHits]/I");
+  fNtuple2->Branch("ADC",fRawRootData.ADC,"ADC[nHits][512]/I");
+  fNtuple2->Branch("sumADC",fRawRootData.sumADC,"sumADC[nHits]/F");
+  fNtuple2->Branch("maxADC",fRawRootData.maxADC,"maxADC[nHits]/F");
+  fNtuple2->Branch("maxPoint",fRawRootData.maxPoint,"maxPoint[nHits]/F");
+  fNtuple2->Branch("summaxADC", &fRawRootData.summaxADC, "summaxADC/F");
+  fNtuple2->Branch("pixelX",fRawRootData.pixelX,"pixelX[nHits]/I");
+  fNtuple2->Branch("pixelY",fRawRootData.pixelY,"pixelY[nHits]/I");
+
+
   //=========================================================
   G4cout<<"------>create track graph rootfile"<<G4endl;
 
@@ -221,8 +242,11 @@ void HistoManager::save()
   G4cout<<"<<------------HistoManager::save()-------------------->>"<<G4endl;
   fRootFile->cd();
   fNtuple->Write();
+  fRawRootFile->cd();
+  fNtuple2->Write();
  // fRootFile->Write();
   fRootFile->Close();
+  fRawRootFile->Close();
   fGraphRootFile->Close();
   G4cout<<"------>close rootfiles"<<G4endl;
 }
@@ -282,4 +306,49 @@ void HistoManager::FillTrackGraph(TrackInfo* fTrackInfo, G4int nEvents, G4int nT
   Track_YZ->Write();
   dE_dx_graph->Write();
 
+}
+
+void HistoManager::SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch][Nsp])
+{
+    //set the initial hits of this track/event to 0
+    fRawRootData.reset();
+
+    for(int i=0;i<Tch;i++){
+
+        //loop over all the  waveforms in X and Y channels
+        //to save the output data into the RawRootData class
+        if(waveform_X[i][0]!=0){
+            fRawRootData.pixelX[fRawRootData.nHits] = i+1;
+            fRawRootData.pixelY[fRawRootData.nHits] = 0;
+            memcpy(fRawRootData.ADC[fRawRootData.nHits],waveform_X[i],Nsp*sizeof(int));
+            for(int j=0;j<Nsp;j++){
+                if(fRawRootData.maxADC[fRawRootData.nHits]<waveform_X[i][j]) {
+                    fRawRootData.maxADC[fRawRootData.nHits] = waveform_X[i][j];
+                    fRawRootData.maxPoint[fRawRootData.nHits] = j;
+                }
+            }
+            fRawRootData.nHits++;
+        }
+        
+        if (waveform_Y[i][0]!=0){
+            fRawRootData.pixelX[fRawRootData.nHits] = 0;
+            fRawRootData.pixelY[fRawRootData.nHits] = i+1;
+            memcpy(fRawRootData.ADC[fRawRootData.nHits],waveform_Y[i],Nsp*sizeof(int));
+            for(int j=0;j<Nsp;j++){
+                if(fRawRootData.maxADC[fRawRootData.nHits]<waveform_Y[i][j]) {
+                    fRawRootData.maxADC[fRawRootData.nHits] = waveform_Y[i][j];
+                    fRawRootData.maxPoint[fRawRootData.nHits] = j;
+                }
+            }
+            fRawRootData.nHits++;
+        }
+        
+    }
+    std::cout << "Event no. in the output rawroot file: " << fRawRootData.event << std::endl;
+    //-----some non-physical selection cuts can be specialized here (like 5sigma noise cut)-----------------
+
+
+    //-------------------------
+    fNtuple2->Fill();
+    fRawRootData.event++;
 }

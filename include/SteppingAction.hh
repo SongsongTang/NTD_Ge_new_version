@@ -66,6 +66,8 @@ private:
   G4LogicalVolume*         fScoringVolume;
   G4double                 fEdep;
   G4double                 fStepLen;
+  //added on 2023.10.10, function to get the induced charge and its arrival time
+  void DriftOneElectron(G4ThreeVector steppos, G4double edep);
 
 };
 
