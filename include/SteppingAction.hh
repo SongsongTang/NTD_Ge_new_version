@@ -40,6 +40,7 @@
 #include "G4UserSteppingAction.hh"
 #include "EventAction.hh"
 #include "globals.hh"
+#include "Constant.h"
 
 class DetectorConstruction;
 class TrackingAction;
@@ -68,6 +69,7 @@ private:
   G4double                 fStepLen;
   //added on 2023.10.10, function to get the induced charge and its arrival time
   void DriftOneElectron(G4ThreeVector steppos, G4double edep);
+  void FillOneChnSignal(int xpos, int ypos, double edep, double drift_distance);
 
 };
 

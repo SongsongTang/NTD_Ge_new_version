@@ -41,6 +41,7 @@
 #include "G4Step.hh"
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
+#include "Randomize.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 //
@@ -109,7 +110,7 @@ void SteppingAction::UserSteppingAction(const G4Step *aStep)
   // }
 
   // add this steps' energy lost if it is in the Effective Gas volume
-  if (preVolumeName == "GasEff")
+  if (preVolumeName == "Gas" || preVolumeName == "GasEff")
   {
     fEventAction->AddEdep_ScoringVolume(edep);
   }
@@ -118,9 +119,9 @@ void SteppingAction::UserSteppingAction(const G4Step *aStep)
   if (fTrackingAction->GetVolumeFlag1())
   {
     // if the previous tracks are ALL NOT in the periphery volume and the anticoincident MM region
-    if (preVolumeName == "Gas" || preVolumeName == "GasEff2")
+    if (/* preVolumeName == "Gas" ||  */preVolumeName == "GasEff2")
       fTrackingAction->SetVolumeFlag1(false); // this means the track get into the frame
-    if (preVolumeName == "GasEff")
+    if (preVolumeName == "Gas" || preVolumeName == "GasEff")
     {
       fTrackingAction->SetVolumeFlag2(true); // this means this track get into the gas volume
 
@@ -144,8 +145,7 @@ void SteppingAction::UserSteppingAction(const G4Step *aStep)
       if (fStepLen > 0.5 * mm || aStep->GetPostStepPoint()->GetKineticEnergy() == 0)
       {
         G4double dE_dx = fEdep / fStepLen;
-        fEdep = 0;    // reset
-        fStepLen = 0; // reset
+        
         // Get the total track length until this step
         //  G4double TotalTrackLen = aStep->GetTrack()->GetTrackLength();
 
@@ -171,13 +171,23 @@ void SteppingAction::UserSteppingAction(const G4Step *aStep)
 
         // record step informations: the step points of this track, the tracklen & dE/dx, for plotting
         fTrackingAction->AddStepInfo(stepVertexPos, dE_dx, fTrackingAction->GetTrackLenInSV());
+
+        // // added part on 2023.10.09, to implement the process of digitization
+        // // using the XY plane projected position of the step and its energy deposition to get the hit strip and recored it.
+        // if (fTrackingAction->fDigitization)
+        // {
+        //   DriftOneElectron(stepVertexPos, fEdep);
+        // }
+
+        fEdep = 0;    // reset
+        fStepLen = 0; // reset
       }
 
       // added part on 2023.10.09, to implement the process of digitization
       // using the XY plane projected position of the step and its energy deposition to get the hit strip and recored it.
       if (fTrackingAction->fDigitization)
       {
-        DriftOneElectron(stepVertexPos, edep);
+        DriftOneElectron(stepVertexPos, TotalEneTransfer);
       }
     }
     else if (preVolumeName == "GasEff2")
@@ -197,46 +207,160 @@ void SteppingAction::Reset()
 
 void SteppingAction::DriftOneElectron(G4ThreeVector steppos, G4double edep)
 {
+  // G4cout << "===========>> starting DriftOneElectron()" << G4endl;
   // the diffusion effect during drifting can be added later
-  double projected_x = steppos.x();
-  double projected_y = steppos.y();
-  double velocity = fTrackingAction->v_drift;
+  double drift_distance = -steppos.z();
+  double sigma_l = dl*sqrt(drift_distance*0.1)*10;         //in mm
+  double sigma_t = dt*sqrt(drift_distance*0.1)*10;         //in mm
+  if(drift_distance>70.) {
+    G4cout << "This maybe an error: drift distance is out of range!" << G4endl;
+    G4cout << "Drift distance (before diffusion): " << drift_distance << G4endl;
+    G4cout << "Step position: " << steppos.x() << ", " << steppos.y() << ", " << steppos.z() <<G4endl;
+  }
 
-  // double x_inplane = projected_x + fTrackingAction->nch/2*fTrackingAction->chnwidth;
-  // double y_inplane = projected_y + fTrackingAction->nch/2*fTrackingAction->chnwidth;
+  drift_distance += G4RandGauss::shoot(0.,sigma_l);
+  double projected_x = steppos.x()+G4RandGauss::shoot(0.,sigma_t);
+  double projected_y = steppos.y()+G4RandGauss::shoot(0.,sigma_t);
+
+  double velocity = v_drift;
+
+  // double x_inplane = projected_x + nch/2*chnwidth;
+  // double y_inplane = projected_y + nch/2*chnwidth;
 
   // change the coordinate system for simplier mapping
   double x_rot = sqrt(2) / 2 * (projected_x - projected_y);
   double y_rot = sqrt(2) / 2 * (projected_x + projected_y);
 
-  int x_pos = (int)(x_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) / (sqrt(2) / 2 * fTrackingAction->chnwidth);
-  if ((x_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) < 0)
+  int x_pos = (int)((x_rot + 0.5 * sqrt(2) / 2 * chnwidth) / (sqrt(2) / 2 * chnwidth));
+  if ((x_rot + 0.5 * sqrt(2) / 2 * chnwidth) < 0)
     x_pos = x_pos - 1;
-  int y_pos = (int)(y_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) / (sqrt(2) / 2 * fTrackingAction->chnwidth);
-  if ((y_rot + 0.5 * sqrt(2) / 2 * fTrackingAction->chnwidth) < 0)
+  int y_pos = (int)((y_rot + 0.5 * sqrt(2) / 2 * chnwidth) / (sqrt(2) / 2 * chnwidth));
+  if ((y_rot + 0.5 * sqrt(2) / 2 * chnwidth) < 0)
     y_pos = y_pos - 1;
 
+  // int chn;
+  
+  if(!on_plane_spread){
+    FillOneChnSignal(x_pos, y_pos, edep, drift_distance);
+    // if ((x_pos + y_pos) % 2 == 0)
+    // {
+    //   // this means it's on a Y strip
+    //   chn = (y_pos - x_pos) / 2 + nch / 2;
+    //   if (chn >= 0 && chn < nch)
+    //   {
+    //     // G4cout << "X position: " << steppos.x() << ", Y position: " << steppos.y() << ", Y strip number:" << chn << G4endl;
+    //     fTrackingAction->charge_Y[chn].push_back(edep*1e6/E_ion);
+    //     fTrackingAction->time_Y[chn].push_back(drift_distance / velocity * 100); // mm/(cm/us)*100--> ns
+    //     fTrackingAction->IsEmpty = false;
+    //   }
+    // }
+    // else
+    // {
+    //   // this means it's on a X strip
+    //   chn = (y_pos + x_pos - 1) / 2 + nch / 2;
+    //   if (chn >= 0 && chn < nch)
+    //   {
+    //     // G4cout << "Edep: " << edep << ", ionized charges: " << edep*1e6/E_ion << G4endl;
+    //     // G4cout << "X position: " << steppos.x() << ", Y position: " << steppos.y() << ", X strip number:" << chn << G4endl;
+    //     fTrackingAction->charge_X[chn].push_back(edep*1e6/E_ion);
+    //     fTrackingAction->time_X[chn].push_back(drift_distance / velocity * 100); // mm/(cm/us)*100--> ns
+    //     fTrackingAction->IsEmpty = false;
+    //   }
+    // }
+  }
+  else{
+    double x_center_pos = x_pos*chnwidth/sqrt(2);
+    double y_center_pos = y_pos*chnwidth/sqrt(2);
+
+    double dx_plus, dx_minus, dy_plus, dy_minus;
+    double r_this, r_dx_plus, r_dx_minus, r_dy_plus, r_dy_minus, r_sum;
+
+    // G4cout << "distance to center: " << fabs(x_rot-x_center_pos) << " and " << fabs(y_rot-y_center_pos) << G4endl;
+    // if(fabs(x_rot-x_center_pos)>sqrt(2)/4*chnwidth || fabs(y_rot-y_center_pos)>sqrt(2)/4*chnwidth) {
+    //   G4cout << "Error! The position is out of the reconstructed strip!" << G4endl;
+    // }
+    // try to dimulate the spreading of charge due to resistive layer
+    if ((x_pos + y_pos) % 2 == 0)
+    {
+      // this means it's on a Y strip
+      // this stip's central line function is: y-ypos*chnwidth/sqrt(2) = k(x-x_pos*chnwidth/sqrt(2))
+      // chn = (y_pos - x_pos) / 2 + nch / 2;
+      dx_plus = 0.5*chnwidth-(x_rot+y_rot-x_center_pos-y_center_pos)/sqrt(2);
+      dx_minus = 0.5*chnwidth+(x_rot+y_rot-x_center_pos-y_center_pos)/sqrt(2);
+      dy_plus = chnwidth+(x_rot-y_rot-x_center_pos+y_center_pos)/sqrt(2);
+      dy_minus = chnwidth-(x_rot-y_rot-x_center_pos+y_center_pos)/sqrt(2);
+
+      //decide charge sharing ratio of different strips, using a gaussian function
+      r_this = 1;
+      r_dx_plus = exp(-(pow(dx_plus, 2) / (2*pow(sigma_spread, 2))));
+      r_dx_minus = exp(-(pow(dx_minus, 2) / (2*pow(sigma_spread, 2))));
+      r_dy_plus = exp(-(pow(dy_plus, 2) / (2*pow(sigma_spread, 2))));
+      r_dy_minus = exp(-(pow(dy_minus, 2) / (2*pow(sigma_spread, 2))));
+      r_sum = r_this+r_dx_plus+r_dx_minus+r_dy_plus+r_dy_minus;
+
+      //fill the signal for all five channels according to their ratios
+      FillOneChnSignal(x_pos, y_pos, edep*r_this/r_sum, drift_distance);
+      FillOneChnSignal(x_pos+1, y_pos, edep*r_dx_plus/r_sum, drift_distance);
+      FillOneChnSignal(x_pos-1, y_pos, edep*r_dx_minus/r_sum, drift_distance);
+      FillOneChnSignal(x_pos-1, y_pos+1, edep*r_dy_plus/r_sum, drift_distance);
+      FillOneChnSignal(x_pos+1, y_pos-1, edep*r_dy_minus/r_sum, drift_distance);
+    }
+    else
+    {
+      // this means it's on a X strip
+      // this stip's central line function is: y-ypos*chnwidth/sqrt(2) = k(x-x_pos*chnwidth/sqrt(2))
+      // chn = (y_pos - x_pos) / 2 + nch / 2;
+      dx_plus = chnwidth-(x_rot+y_rot-x_center_pos-y_center_pos)/sqrt(2);
+      dx_minus = chnwidth+(x_rot+y_rot-x_center_pos-y_center_pos)/sqrt(2);
+      dy_plus = 0.5*chnwidth+(x_rot-y_rot-x_center_pos+y_center_pos)/sqrt(2);
+      dy_minus = 0.5*chnwidth-(x_rot-y_rot-x_center_pos+y_center_pos)/sqrt(2);
+
+      //decide charge sharing ratio of different strips, using a gaussian function
+      r_this = 1;
+      r_dx_plus = exp(-(pow(dx_plus, 2) / (2*pow(sigma_spread, 2))));
+      r_dx_minus = exp(-(pow(dx_minus, 2) / (2*pow(sigma_spread, 2))));
+      r_dy_plus = exp(-(pow(dy_plus, 2) / (2*pow(sigma_spread, 2))));
+      r_dy_minus = exp(-(pow(dy_minus, 2) / (2*pow(sigma_spread, 2))));
+      r_sum = r_this+r_dx_plus+r_dx_minus+r_dy_plus+r_dy_minus;
+
+      //fill the signal for all five channels according to their ratios
+      FillOneChnSignal(x_pos, y_pos, edep*r_this/r_sum, drift_distance);
+      FillOneChnSignal(x_pos+1, y_pos+1, edep*r_dx_plus/r_sum, drift_distance);
+      FillOneChnSignal(x_pos-1, y_pos-1, edep*r_dx_minus/r_sum, drift_distance);
+      FillOneChnSignal(x_pos, y_pos+1, edep*r_dy_plus/r_sum, drift_distance);
+      FillOneChnSignal(x_pos, y_pos-1, edep*r_dy_minus/r_sum, drift_distance);
+    }
+  }
+}
+
+void SteppingAction::FillOneChnSignal(int x_pos, int y_pos, double edep, double drift_distance)
+{
   int chn;
+  double velocity = v_drift;
   if ((x_pos + y_pos) % 2 == 0)
-  {
-    // this means it's on a x strip
-    chn = (x_pos - y_pos) / 2 + fTrackingAction->nch / 2;
-    if (chn >= 0 && chn < fTrackingAction->nch)
     {
-      fTrackingAction->charge_X[chn].push_back(edep*1e6/E_ion);
-      fTrackingAction->time_X[chn].push_back(-steppos.z() / velocity * 100); // mm/(cm/us)*100--> ns
+      // this means it's on a Y strip
+      chn = (y_pos - x_pos) / 2 + nch / 2;
+      if (chn >= 0 && chn < nch)
+      {
+        // G4cout << "This is a Y channel hit, channel number is: " << chn << ", energy deposition: " << edep << G4endl;
+        fTrackingAction->charge_Y[chn].push_back(edep*1e6/E_ion);
+        fTrackingAction->time_Y[chn].push_back(drift_distance / velocity * 100); // mm/(cm/us)*100--> ns
+        fTrackingAction->IsEmpty = false;
+      }
     }
-  }
-  else
-  {
-    // this means it's on a y strip
-    chn = (y_pos + x_pos - 1) / 2 + fTrackingAction->nch / 2;
-    if (chn >= 0 && chn < fTrackingAction->nch)
+    else
     {
-      fTrackingAction->charge_Y[chn].push_back(edep*1e6/E_ion);
-      fTrackingAction->time_Y[chn].push_back(-steppos.z() / velocity * 100); // mm/(cm/us)*100--> ns
+      // this means it's on a X strip
+      chn = (y_pos + x_pos - 1) / 2 + nch / 2;
+      if (chn >= 0 && chn < nch)
+      {
+        // G4cout << "This is a X channel hit, channel number is: " << chn << ", energy deposition: " << edep << G4endl;
+        fTrackingAction->charge_X[chn].push_back(edep*1e6/E_ion);
+        fTrackingAction->time_X[chn].push_back(drift_distance / velocity * 100); // mm/(cm/us)*100--> ns
+        fTrackingAction->IsEmpty = false;
+      }
     }
-  }
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

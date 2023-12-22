@@ -61,6 +61,16 @@ TrackingAction::TrackingAction(RunAction*runAct,EventAction* EA,HistoManager* hi
     G4cout<<"<<------------TrackingAction::TrackingAction(RunAction*runAct,EventAction* EA)-------------------->>"<<G4endl;
     fTrackMessenger = new TrackingMessenger(this);
     nCounts = 0;
+
+    // charge_X.resize(nch);
+    // time_X.resize(nch);
+    // charge_Y.resize(nch);
+    // time_Y.resize(nch);
+    memset(waveform_X,0,sizeof(waveform_X));
+    memset(waveform_Y,0,sizeof(waveform_Y));
+    memset(waveform_X_int,0,sizeof(waveform_X_int));
+    memset(waveform_Y_int,0,sizeof(waveform_Y_int));
+    IsEmpty = true;
     //fSteppingVerbose_Tracking = new SteppingVerbose();
 }
 
@@ -140,6 +150,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
     fInScoringVolume1=true;      //at the beginning of a track, set the default value to be true
     fInScoringVolume2=false;      //at the beginning of a track, set the default value to be false
     fTrackInfo_Stepping.reset();    //reset the recorded step points at each new track
+    if(!IsEmpty) ClearChannelBuffer();           //clear the tracking digitization info of the former track
 
     //
     //-----------------update------------------------
@@ -214,7 +225,8 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
 
     //Important: the following part should be switched for alpha/beta track information extracting!!!
     // if(KinEnergy_start < 10*keV || name != "alpha") fInScoringVolume1 = false;
-    if(KinEnergy_start < 10*keV || name != "e-") fInScoringVolume1 = false;
+    if(/* KinEnergy_start < 10*keV ||  */name != "e-") fInScoringVolume1 = false;
+    if(creator_process == "eIoni" || creator_process == "ionIoni"/*  || name != "gamma" */) fInScoringVolume1 = false;                 //for Fe55 source simulation
     // if(KinEnergy_start < 10*keV || (name != "mu+" && name != "mu-")) fInScoringVolume1 = false;         // for cosmic ray simulation
     // if(ID!=1) fInScoringVolume1 = false;                //Test: only save primary beta tracks (for run12_2 only)!
     // if(parentID!=1 && parentID!=2) fInScoringVolume1 = false;           //Test2: only save Sr90/Y90 decay primary betas (for Sr90 beta source run only)!
@@ -290,7 +302,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
 
 
     G4String LastVolumeName = track->GetVolume()->GetName();
-    if (fInScoringVolume1 && fInScoringVolume2 && LastVolumeName != "Gas" && LastVolumeName != "GasEff2" && !fReject)
+    if (fInScoringVolume1 && fInScoringVolume2/*  && LastVolumeName != "Gas"  */&& LastVolumeName != "GasEff2" && !fReject)
     {   //count conditions:
         //  this e- track does NOT cross the Al frame
         //  this track has at least part of it in the gas volume
@@ -323,7 +335,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
         if(MaxPosition[2]-MinPosition[2]>0.){
             analysis->FillH1(13, x_pos);
             analysis->FillH1(14, y_pos);
-            analysis->FillH1(15, E_primary);
+            analysis->FillH1(15, KinEnergy_start);
 
             fParticleInfo_Tracking.fStartPosX.push_back(x_pos);
             fParticleInfo_Tracking.fStartPosY.push_back(y_pos);
@@ -351,8 +363,14 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
                 fEvent->UpdateParticleInfo(&fParticleInfo_Tracking);
                 if(nCounts<100)
                 {
-                    fHistoManager_Track->FillTrackGraph(&fTrackInfo_Stepping, nEvents, nTracks);
+                    fHistoManager_Track->FillTrackGraph(&fTrackInfo_Stepping, nEvents, nTracks, nCounts);
                     nCounts++;
+                }
+
+                //added on 2023.10.10, to fill the digitized waveform and data
+                if(fDigitization) {
+                    // G4cout << "========== digitization begins =============" << G4endl;
+                    FillChannelWaveforms();
                 }
             }
 
@@ -386,11 +404,11 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
 
             // fEvent->UpdateParticleInfo(&fParticleInfo_Tracking);
 
-            //added on 2023.10.10, to fill the digitized waveform and data
-            if(fDigitization) {
-                ClearChannelBuffer();
-                FillChannelWaveforms();
-            }
+            // //added on 2023.10.10, to fill the digitized waveform and data
+            // if(fDigitization) {
+            //     // G4cout << "========== digitization begins =============" << G4endl;
+            //     FillChannelWaveforms();
+            // }
         }
 
     }
@@ -408,79 +426,134 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
 
 void TrackingAction::FillChannelWaveforms()
 {
-    double minT_x = time_X[0][0]; // 假设初始最小值为二维向量的第一个元素
+    // G4cout << "============FillChannelWaveforms() begin ============= " << G4endl;
+    memset(waveform_X,0,sizeof(waveform_X));
+    memset(waveform_Y,0,sizeof(waveform_Y));
+    memset(waveform_X_int,0,sizeof(waveform_X_int));
+    memset(waveform_Y_int,0,sizeof(waveform_Y_int));
+    // G4cout << "first value: " << time_X[0][0] << G4endl;
+    // G4cout << "sizeof the vector each row: " << time_X[0].size() << G4endl;
+    double minT_x = -1; // 
 
     // 遍历二维向量
-    for (int row = 0; row < time_X.size(); ++row) {
-        for (int col = 0; col < time_X[row].size(); ++col) {
+    for (unsigned int row = 0; row < nch; ++row) {
+        for (unsigned int col = 0; col < time_X[row].size(); ++col) {
+            if(minT_x == -1) minT_x = time_X[row][col];
             if (time_X[row][col] < minT_x) {
                 minT_x = time_X[row][col];
             }
         }
     }
 
-    double minT_y = time_Y[0][0]; // 假设初始最小值为二维向量的第一个元素
+    double minT_y = -1; // 
 
     // 遍历二维向量
-    for (int row = 0; row < time_Y.size(); ++row) {
-        for (int col = 0; col < time_Y[row].size(); ++col) {
+    for (unsigned int row = 0; row < nch; ++row) {
+        for (unsigned int col = 0; col < time_Y[row].size(); ++col) {
+            if(minT_y == -1) minT_y = time_Y[row][col];
             if (time_Y[row][col] < minT_y) {
                 minT_y = time_Y[row][col];
             }
         }
     }
 
-    double minT = (minT_x<minT_y?minT_x,minT_y);
+    double minT = (minT_x<minT_y?minT_x:minT_y);
 
-    if(charge_X.size()!=time_X.size() || charge_Y.size()!=time_Y.size()){
-        std::cout<<"Error: The size of charge and time vector is not equal!"<<std::endl;
-        continue;
-    }
     for(int i=0;i<nch;i++){
-        if(charge_X.size()>0){
-            for(int j=0;j<charge_X.size();j++){
-                //this "-60" term is to ensure the first arrived signal to sit near 100 time point
-                int time_bin_start = (int)((time_X[i][j]-minT)/40)-60;
+        if(charge_X[i].size()!=time_X[i].size() || charge_Y[i].size()!=time_Y[i].size()){
+            std::cout<<"Error: The size of charge and time vector is not equal!"<<std::endl;
+            return;
+        }
+        if(charge_X[i].size()>0){
+            bool isefficent = false;
+            for(unsigned int j=0;j<charge_X[i].size();j++){
+                
+                int delta_T = (int)((time_X[i][j]-minT)/40);
+                //this "100" term is to ensure the first arrived signal to sit near 100 time point
+                if(delta_T>=(Nsp-100)) continue;
+                int time_bin_start = -delta_T-100+peak_pos;
                 //fill the waveform of this channel
                 for(int ADC=0;ADC<Nsp;ADC++){
-                    if(time_bin_start<0) waveform_X[i][ADC]+=0;
-                    else waveform_X[i][ADC] += 200*gain*charge_X[i][j]*response_func[time_bin_start];
+                    if(time_bin_start<0 || time_bin_start>(int)(sizeof(response_func)/sizeof(response_func[0])) || charge_X[i][j]==0) waveform_X[i][ADC]+=0;
+                    else {
+                        waveform_X[i][ADC] += 1.60218e-19/timebinwidth*gain*factor*1/CSAgain*charge_X[i][j]*response_func[time_bin_start];
+                        isefficent = true;
+                    }
                     time_bin_start++;
                 }
             }
             //this process is to ensure the first point of a valid waveform is always non zero,
             // which is convinient for later filling data
-            if(waveform_X[i][0]==0) waveform_X[i][0]=-1;
+            if(isefficent && waveform_X[i][0]==0) waveform_X[i][0]=-1;
             //save the waveform in int format also
             for(int k=0;k<Nsp;k++){
                 waveform_X_int[i][k] = static_cast<int>(waveform_X[i][k]);
             }
+            if(isefficent) {
+                int maxpoint = 0;
+                int maxvalue_int = 0;
+                double maxvalue_double = 0;
+                for(int k=0;k<Nsp;k++) {
+                    if(waveform_X[i][k] > maxvalue_double) {
+                        maxpoint = k;
+                        maxvalue_double = waveform_X[i][k];
+                        maxvalue_int = waveform_X_int[i][k];
+                    }
+                }
+                // if(maxvalue_int ==0) {
+                //     G4cout << "This waveform's maximum value is 0, it's maximum originally is: " << maxvalue_double << " at " << maxpoint << G4endl;
+                // }
+            }
         }
 
-        if(charge_Y.size()>0){
-            for(int j=0;j<charge_Y.size();j++){
-                int time_bin_start = (int)((time_Y[i][j]-minT)/40)-60;
+        if(charge_Y[i].size()>0){
+            bool isefficent = false;
+            for(unsigned int j=0;j<charge_Y[i].size();j++){
+                
+                int delta_T = (int)((time_Y[i][j]-minT)/40);
+                //this "100" term is to ensure the first arrived signal to sit near 100 time point
+                if(delta_T>=(Nsp-100)) continue;
+                int time_bin_start = -delta_T-100+peak_pos;
                 //fill the waveform of this channel
                 for(int ADC=0;ADC<Nsp;ADC++){
-                    if(time_bin_start<0) waveform_Y[i][ADC]+=0;
-                    else waveform_Y[i][ADC] += 200*gain*charge_Y[i][j]*response_func[time_bin_start];
+                    if(time_bin_start<0 || time_bin_start>(int)(sizeof(response_func)/sizeof(response_func[0])) || charge_Y[i][j]==0) waveform_Y[i][ADC]+=0;
+                    else {
+                        waveform_Y[i][ADC] += 1.60218e-19/timebinwidth*gain*factor*1/CSAgain*charge_Y[i][j]*response_func[time_bin_start];
+                        isefficent = true;
+                    }
                     time_bin_start++;
                 }
             }
             //this process is to ensure the first point of a valid waveform is always non zero,
             // which is convinient for later filling data
-            if(waveform_Y[i][0]==0) waveform_Y[i][0]=-1;
+            if(isefficent && waveform_Y[i][0]==0) waveform_Y[i][0]=-1;
             //save the waveform in int format also
             for(int k=0;k<Nsp;k++){
                 waveform_Y_int[i][k] = static_cast<int>(waveform_Y[i][k]);
+            }
+            if(isefficent) {
+                int maxpoint = 0;
+                int maxvalue_int = 0;
+                double maxvalue_double = 0;
+                for(int k=0;k<Nsp;k++) {
+                    if(waveform_Y[i][k] > maxvalue_double) {
+                        maxpoint = k;
+                        maxvalue_double = waveform_Y[i][k];
+                        maxvalue_int = waveform_Y_int[i][k];
+                    }
+                }
+                // if(maxvalue_int ==0) {
+                //     G4cout << "This waveform's maximum value is 0, it's maximum originally is: " << maxvalue_double << " at " << maxpoint << G4endl;
+                // }
             }
         }
     }
     // //using float form of the waveform
     // fHistoManager_Track->SaveRawRootData(waveform_X,waveform_Y);
 
+    G4ThreeVector position = G4ThreeVector(fTrackInfo_Stepping.fStepVertexPosX[0],fTrackInfo_Stepping.fStepVertexPosY[0],fTrackInfo_Stepping.fStepVertexPosZ[0]);
     //using int form of the waveform
-    fHistoManager_Track->SaveRawRootData(waveform_X_int,waveform_Y_int);
+    fHistoManager_Track->SaveRawRootData(waveform_X_int,waveform_Y_int,position,E_primary);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

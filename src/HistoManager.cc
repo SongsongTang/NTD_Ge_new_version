@@ -212,20 +212,45 @@ void HistoManager::book()
   fNtuple->Branch("TrackLength_per_step",          &fParticleInfo.fTrackLength_per_step);
 
   //added on 2023.10.09, tree for digitization output
-  fRawRootFile = new TFile(rawrootfile_name,"RECREATE");
-  fNtuple2 = new TTree("richraw","richraw");
-  fNtuple2->Branch("event",&fRawRootData.event,"event/I");
-  fNtuple2->Branch("nHits",&fRawRootData.nHits,"nHits/I");
-  fNtuple2->Branch("Fec",fRawRootData.Fec,"Fec[nHits]/I");
-  fNtuple2->Branch("Chip",fRawRootData.Chip,"Chip[nHits]/I");
-  fNtuple2->Branch("Chn",fRawRootData.Chn,"Chn[nHits]/I");
-  fNtuple2->Branch("ADC",fRawRootData.ADC,"ADC[nHits][512]/I");
-  fNtuple2->Branch("sumADC",fRawRootData.sumADC,"sumADC[nHits]/F");
-  fNtuple2->Branch("maxADC",fRawRootData.maxADC,"maxADC[nHits]/F");
-  fNtuple2->Branch("maxPoint",fRawRootData.maxPoint,"maxPoint[nHits]/F");
-  fNtuple2->Branch("summaxADC", &fRawRootData.summaxADC, "summaxADC/F");
-  fNtuple2->Branch("pixelX",fRawRootData.pixelX,"pixelX[nHits]/I");
-  fNtuple2->Branch("pixelY",fRawRootData.pixelY,"pixelY[nHits]/I");
+  fRawRootFile = new TFile(rawrootfile_name,"UPDATE");
+  fNtuple2= (TTree*)fRawRootFile->Get("richraw");
+  if(fNtuple2 == (TTree*)NULL){
+    fNtuple2 = new TTree("richraw","richraw");
+    fNtuple2->Branch("event",&fRawRootData.event,"event/I");
+    fNtuple2->Branch("nHits",&fRawRootData.nHits,"nHits/I");
+    fNtuple2->Branch("Fec",fRawRootData.Fec,"Fec[nHits]/I");
+    fNtuple2->Branch("Chip",fRawRootData.Chip,"Chip[nHits]/I");
+    fNtuple2->Branch("Chn",fRawRootData.Chn,"Chn[nHits]/I");
+    fNtuple2->Branch("ADC",fRawRootData.ADC,"ADC[nHits][512]/I");
+    fNtuple2->Branch("sumADC",fRawRootData.sumADC,"sumADC[nHits]/F");
+    fNtuple2->Branch("maxADC",fRawRootData.maxADC,"maxADC[nHits]/F");
+    fNtuple2->Branch("maxPoint",fRawRootData.maxPoint,"maxPoint[nHits]/F");
+    fNtuple2->Branch("summaxADC", &fRawRootData.summaxADC, "summaxADC/F");
+    fNtuple2->Branch("pixelX",fRawRootData.pixelX,"pixelX[nHits]/I");
+    fNtuple2->Branch("pixelY",fRawRootData.pixelY,"pixelY[nHits]/I");
+    fNtuple2->Branch("startpos_x",&fRawRootData.startpos_x,"startpos_x/F");
+    fNtuple2->Branch("startpos_y",&fRawRootData.startpos_y,"startpos_y/F");
+    fNtuple2->Branch("startpos_z",&fRawRootData.startpos_z,"startpos_z/F");
+    fNtuple2->Branch("kinE_start",&fRawRootData.kinE_start,"kinE_start/F");
+  }
+  else {
+    fNtuple2->SetBranchAddress("event", &fRawRootData.event);
+    fNtuple2->SetBranchAddress("nHits", &fRawRootData.nHits);
+    fNtuple2->SetBranchAddress("Fec", fRawRootData.Fec);
+    fNtuple2->SetBranchAddress("Chip", fRawRootData.Chip);
+    fNtuple2->SetBranchAddress("Chn", fRawRootData.Chn);
+    fNtuple2->SetBranchAddress("ADC", fRawRootData.ADC);
+    fNtuple2->SetBranchAddress("sumADC", fRawRootData.sumADC);
+    fNtuple2->SetBranchAddress("maxADC", fRawRootData.maxADC);
+    fNtuple2->SetBranchAddress("maxPoint", fRawRootData.maxPoint);
+    fNtuple2->SetBranchAddress("summaxADC", &fRawRootData.summaxADC);
+    fNtuple2->SetBranchAddress("pixelX", fRawRootData.pixelX);
+    fNtuple2->SetBranchAddress("pixelY", fRawRootData.pixelY);
+    fNtuple2->SetBranchAddress("startpos_x", &fRawRootData.startpos_x);
+    fNtuple2->SetBranchAddress("startpos_y", &fRawRootData.startpos_y);
+    fNtuple2->SetBranchAddress("startpos_z", &fRawRootData.startpos_z);
+    fNtuple2->SetBranchAddress("kinE_start", &fRawRootData.kinE_start);
+  }
 
 
   //=========================================================
@@ -253,10 +278,10 @@ void HistoManager::save()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void HistoManager::FillTrackGraph(TrackInfo* fTrackInfo, G4int nEvents, G4int nTracks){
+void HistoManager::FillTrackGraph(TrackInfo* fTrackInfo, G4int nEvents, G4int nTracks, G4int nCounts){
     
   // if(nEvents>100)  return;
-  G4double x, y, z;
+  G4double x, y, drift_distance;
   G4double dE_dx, tracklen;
   G4int npoints = fTrackInfo->fStepVertexPosX.size();
   TPolyLine3D* fTrackGraph = new TPolyLine3D(npoints);
@@ -267,19 +292,19 @@ void HistoManager::FillTrackGraph(TrackInfo* fTrackInfo, G4int nEvents, G4int nT
 
   Track_XZ->SetMarkerStyle(7);
   memset(grtitle, 0, sizeof(grtitle));
-  sprintf(grtitle, "Event%d_Track%d_XZ;X(mm);Z(mm)", nEvents, nTracks);
+  sprintf(grtitle, "Event%d_Track%d_No%d_XZ;X(mm);Drift distance(mm)", nEvents, nTracks, nCounts);
   Track_XZ->SetTitle(grtitle);
   Track_XZ->SetName(grtitle);
 
   Track_YZ->SetMarkerStyle(7);
   memset(grtitle, 0, sizeof(grtitle));
-  sprintf(grtitle, "Event%d_Track%d_YZ;Y(mm);Z(mm)", nEvents, nTracks);
+  sprintf(grtitle, "Event%d_Track%d_No%d_YZ;Y(mm);Drift distance(mm)", nEvents, nTracks, nCounts);
   Track_YZ->SetTitle(grtitle);
   Track_YZ->SetName(grtitle);
 
   dE_dx_graph->SetMarkerStyle(7);
   memset(grtitle, 0, sizeof(grtitle));
-  sprintf(grtitle, "Event%d_Track%d_dE/dx;track length(mm);dE/dx(keV/mm)", nEvents, nTracks);
+  sprintf(grtitle, "Event%d_Track%d_No%d_dE/dx;track length(mm);dE/dx(keV/mm)", nEvents, nTracks, nCounts);
   dE_dx_graph->SetTitle(grtitle);
   dE_dx_graph->SetName(grtitle);
 
@@ -288,15 +313,15 @@ void HistoManager::FillTrackGraph(TrackInfo* fTrackInfo, G4int nEvents, G4int nT
   for(G4int i = 0; i<npoints; i++){
     x = fTrackInfo->fStepVertexPosX[i];
     y = fTrackInfo->fStepVertexPosY[i];
-    z = fTrackInfo->fStepVertexPosZ[i];
+    drift_distance = -fTrackInfo->fStepVertexPosZ[i];
     dE_dx = fTrackInfo->fStepdE_dx[i];
     tracklen = fTrackInfo->fStepTrackLen[i];
 
-    // G4cout << "     " << x <<"   " << y << "   " << z << G4endl;
+    // G4cout << "     " << x <<"   " << y << "   " << drift_distance << G4endl;
 
-    fTrackGraph->SetPoint(i,x,y,z);
-    Track_XZ->SetPoint(i,x,z);
-    Track_YZ->SetPoint(i,y,z);
+    fTrackGraph->SetPoint(i,x,y,drift_distance);
+    Track_XZ->SetPoint(i,x,drift_distance);
+    Track_YZ->SetPoint(i,y,drift_distance);
     dE_dx_graph->SetPoint(i,tracklen,dE_dx*1000);     //MeV/mm---->keV/mm
   }
 
@@ -308,7 +333,7 @@ void HistoManager::FillTrackGraph(TrackInfo* fTrackInfo, G4int nEvents, G4int nT
 
 }
 
-void HistoManager::SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch][Nsp])
+void HistoManager::SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch][Nsp], G4ThreeVector position, G4double energy)
 {
     //set the initial hits of this track/event to 0
     fRawRootData.reset();
@@ -320,6 +345,7 @@ void HistoManager::SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch]
         if(waveform_X[i][0]!=0){
             fRawRootData.pixelX[fRawRootData.nHits] = i+1;
             fRawRootData.pixelY[fRawRootData.nHits] = 0;
+            fRawRootData.Fec[fRawRootData.nHits] = 15;
             memcpy(fRawRootData.ADC[fRawRootData.nHits],waveform_X[i],Nsp*sizeof(int));
             for(int j=0;j<Nsp;j++){
                 if(fRawRootData.maxADC[fRawRootData.nHits]<waveform_X[i][j]) {
@@ -327,12 +353,14 @@ void HistoManager::SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch]
                     fRawRootData.maxPoint[fRawRootData.nHits] = j;
                 }
             }
+            fRawRootData.summaxADC += fRawRootData.maxADC[fRawRootData.nHits];
             fRawRootData.nHits++;
         }
         
         if (waveform_Y[i][0]!=0){
             fRawRootData.pixelX[fRawRootData.nHits] = 0;
             fRawRootData.pixelY[fRawRootData.nHits] = i+1;
+            fRawRootData.Fec[fRawRootData.nHits] = 15;
             memcpy(fRawRootData.ADC[fRawRootData.nHits],waveform_Y[i],Nsp*sizeof(int));
             for(int j=0;j<Nsp;j++){
                 if(fRawRootData.maxADC[fRawRootData.nHits]<waveform_Y[i][j]) {
@@ -340,11 +368,19 @@ void HistoManager::SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch]
                     fRawRootData.maxPoint[fRawRootData.nHits] = j;
                 }
             }
+            fRawRootData.summaxADC += fRawRootData.maxADC[fRawRootData.nHits];
             fRawRootData.nHits++;
         }
         
     }
+    fRawRootData.startpos_x = (float)position.x();     //track start position x
+    fRawRootData.startpos_y = (float)position.y();     //track start position y
+    fRawRootData.startpos_z = (float)position.z();     //track start position z
+    fRawRootData.kinE_start = (float)energy;       //track start kinetic energy 
+    
     std::cout << "Event no. in the output rawroot file: " << fRawRootData.event << std::endl;
+    // std::cout << "Track start position: (" << fRawRootData.startpos_x << ", " << fRawRootData.startpos_y << ", " << fRawRootData.startpos_z << ")" 
+        // << " , track start kinetic energy: " << fRawRootData.kinE_start << std::endl;
     //-----some non-physical selection cuts can be specialized here (like 5sigma noise cut)-----------------
 
 

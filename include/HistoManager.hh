@@ -224,10 +224,16 @@ public:
   int Chip[Tch];
   int Chn[Tch];
   int ADC[Tch][Nsp];
+  float sumADC[Tch];
   float maxADC[Tch];
   float maxPoint[Tch];
+  float summaxADC;
   int pixelX[Tch];
   int pixelY[Tch];
+  float startpos_x;
+  float startpos_y;
+  float startpos_z;
+  float kinE_start;
   
   void reset()
   {
@@ -237,10 +243,16 @@ public:
     memset(Chip,0,sizeof(Chip));
     memset(Chn,0,sizeof(Chn));
     memset(ADC,0,sizeof(ADC));
+    memset(sumADC,0,sizeof(sumADC));
     memset(maxADC,0,sizeof(maxADC));
     memset(maxPoint,0,sizeof(maxPoint));
+    summaxADC = 0;
     memset(pixelX,0,sizeof(pixelX));
     memset(pixelY,0,sizeof(pixelY));
+    startpos_x = 0;
+    startpos_y = 0;
+    startpos_z = 0;
+    kinE_start = 0;
   };
 
   RawRootData(){
@@ -250,10 +262,16 @@ public:
     memset(Chip,0,sizeof(Chip));
     memset(Chn,0,sizeof(Chn));
     memset(ADC,0,sizeof(ADC));
+    memset(sumADC,0,sizeof(sumADC));
     memset(maxADC,0,sizeof(maxADC));
     memset(maxPoint,0,sizeof(maxPoint));
+    summaxADC = 0;
     memset(pixelX,0,sizeof(pixelX));
     memset(pixelY,0,sizeof(pixelY));
+    startpos_x = 0;
+    startpos_y = 0;
+    startpos_z = 0;
+    kinE_start = 0;
   }
 };
 
@@ -264,8 +282,8 @@ public:
   ~HistoManager();
   void save();
   void book();
-  void FillTrackGraph(TrackInfo*, G4int, G4int);
-  void SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch][Nsp]);
+  void FillTrackGraph(TrackInfo*, G4int, G4int, G4int);
+  void SaveRawRootData(int waveform_X[Tch][Nsp], int waveform_Y[Tch][Nsp],G4ThreeVector position,G4double energy);
   ParticleInfo fParticleInfo;
   RawRootData fRawRootData;
 private:
