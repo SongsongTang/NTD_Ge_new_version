@@ -43,6 +43,7 @@ HistoManager::HistoManager()
   : fFileName("NTD_Ge"),fRootFile(0),fNtuple(0)
 {
   G4cout<<"<<------------HistoManager::HistoManager()-------------------->>"<<G4endl;
+  AllFilesOutput = false;
   Book();
 }
 
@@ -140,7 +141,8 @@ void HistoManager::Book()
     G4int ih = analysisManager->CreateH1(id[k], title[k], nbins, vmin, vmax);
     analysisManager->SetH1Activation(ih, false);
   }
-  
+  G4int ih = analysisManager->CreateH2("hitsmap", "hitsmap of step point", 120, -75, 75, 120, -75, 75);
+  analysisManager->SetH2Activation(ih, false);
 }
 
 void HistoManager::book()
@@ -166,50 +168,53 @@ void HistoManager::book()
     rawrootfile_name = "Rawroot_"+fFileName+".root";
   }
   
-  fRootFile = new TFile(datafile_name,"RECREATE");
-  fNtuple = new TTree("T","data of decay");
-  fNtuple->Branch("nTrack",                 &fParticleInfo.nTrack,                  "nTrack/I");
-  // fNtuple->Branch("ParticleZ",              &fParticleInfo.fParticleZ);
-  // fNtuple->Branch("ParticleA",              &fParticleInfo.fParticleA);
-  // fNtuple->Branch("ParticleMass",           &fParticleInfo.fParticleMass);
-  // fNtuple->Branch("ParticleCode",           &fParticleInfo.fParticleCode);
-  // fNtuple->Branch("ParticleKineticEnergy",  &fParticleInfo.fTrackKineticEnergy);
-  // fNtuple->Branch("TrackVertexPosX",        &fParticleInfo.fTrackVertexPosX);
-  // fNtuple->Branch("TrackVertexPosY",        &fParticleInfo.fTrackVertexPosY);
-  // fNtuple->Branch("TrackVertexPosZ",        &fParticleInfo.fTrackVertexPosZ);
-  // fNtuple->Branch("TrackVertexDirX",        &fParticleInfo.fTrackVertexDirX);
-  // fNtuple->Branch("TrackVertexDirY",        &fParticleInfo.fTrackVertexDirY);
-  // fNtuple->Branch("TrackVertexDirZ",        &fParticleInfo.fTrackVertexDirZ);
-  // fNtuple->Branch("TrackID",                &fParticleInfo.fTrackID);
-  // fNtuple->Branch("TrackParentID",          &fParticleInfo.fParentID);
-  // // fNtuple->Branch("TrackEdepInSource",    &fParticleInfo.fTrackEdepInSource);
-  // //fNtuple->Branch("TrackEdepInCuCollimation",     &fParticleInfo.fTrackEdepInCuCollimation);
-  // //fNtuple->Branch("TrackEdepInHole1",    &fParticleInfo.fTrackEdepInHole1);
-  // // fNtuple->Branch("TrackEdepInPET",    &fParticleInfo.fTrackEdepInPET);
-  // // fNtuple->Branch("TrackEdepInGas",    &fParticleInfo.fTrackEdepInGas);
-  // fNtuple->Branch("TrackTime",              &fParticleInfo.fTrackTime);
+  if(AllFilesOutput){
+    fRootFile = new TFile(datafile_name,"RECREATE");
+    fNtuple = new TTree("T","data of decay");
+    fNtuple->Branch("nTrack",                 &fParticleInfo.nTrack,                  "nTrack/I");
+    // fNtuple->Branch("ParticleZ",              &fParticleInfo.fParticleZ);
+    // fNtuple->Branch("ParticleA",              &fParticleInfo.fParticleA);
+    // fNtuple->Branch("ParticleMass",           &fParticleInfo.fParticleMass);
+    // fNtuple->Branch("ParticleCode",           &fParticleInfo.fParticleCode);
+    // fNtuple->Branch("ParticleKineticEnergy",  &fParticleInfo.fTrackKineticEnergy);
+    // fNtuple->Branch("TrackVertexPosX",        &fParticleInfo.fTrackVertexPosX);
+    // fNtuple->Branch("TrackVertexPosY",        &fParticleInfo.fTrackVertexPosY);
+    // fNtuple->Branch("TrackVertexPosZ",        &fParticleInfo.fTrackVertexPosZ);
+    // fNtuple->Branch("TrackVertexDirX",        &fParticleInfo.fTrackVertexDirX);
+    // fNtuple->Branch("TrackVertexDirY",        &fParticleInfo.fTrackVertexDirY);
+    // fNtuple->Branch("TrackVertexDirZ",        &fParticleInfo.fTrackVertexDirZ);
+    // fNtuple->Branch("TrackID",                &fParticleInfo.fTrackID);
+    // fNtuple->Branch("TrackParentID",          &fParticleInfo.fParentID);
+    // // fNtuple->Branch("TrackEdepInSource",    &fParticleInfo.fTrackEdepInSource);
+    // //fNtuple->Branch("TrackEdepInCuCollimation",     &fParticleInfo.fTrackEdepInCuCollimation);
+    // //fNtuple->Branch("TrackEdepInHole1",    &fParticleInfo.fTrackEdepInHole1);
+    // // fNtuple->Branch("TrackEdepInPET",    &fParticleInfo.fTrackEdepInPET);
+    // // fNtuple->Branch("TrackEdepInGas",    &fParticleInfo.fTrackEdepInGas);
+    // fNtuple->Branch("TrackTime",              &fParticleInfo.fTrackTime);
 
-  //new branches
-  fNtuple->Branch("StartPosX",              &fParticleInfo.fStartPosX);
-  fNtuple->Branch("StartPosY",              &fParticleInfo.fStartPosY);
-  fNtuple->Branch("TrackLength",              &fParticleInfo.fTrackLength);
-  fNtuple->Branch("TrackLength_MM",              &fParticleInfo.fTrackLength_MM);
-  fNtuple->Branch("XTrackLength",              &fParticleInfo.fXTrackLength);
-  fNtuple->Branch("YTrackLength",              &fParticleInfo.fYTrackLength);
-  fNtuple->Branch("DriftDistance",              &fParticleInfo.fDriftDistance);
-  fNtuple->Branch("CotTheta",              &fParticleInfo.fCotTheta);
-  fNtuple->Branch("TrackEnergy",              &fParticleInfo.fTrackEnergy);
-  fNtuple->Branch("TrackEnergy_MM",              &fParticleInfo.fTrackEnergy_MM);
-  fNtuple->Branch("MaxEdepPosition",              &fParticleInfo.fMaxEdepPosition);
-  fNtuple->Branch("MaxEdepPositionZ",             &fParticleInfo.fMaxEdepPositionZ);
+    //new branches
+    fNtuple->Branch("StartPosX",              &fParticleInfo.fStartPosX);
+    fNtuple->Branch("StartPosY",              &fParticleInfo.fStartPosY);
+    fNtuple->Branch("TrackLength",              &fParticleInfo.fTrackLength);
+    fNtuple->Branch("TrackLength_MM",              &fParticleInfo.fTrackLength_MM);
+    fNtuple->Branch("XTrackLength",              &fParticleInfo.fXTrackLength);
+    fNtuple->Branch("YTrackLength",              &fParticleInfo.fYTrackLength);
+    fNtuple->Branch("DriftDistance",              &fParticleInfo.fDriftDistance);
+    fNtuple->Branch("CotTheta",              &fParticleInfo.fCotTheta);
+    fNtuple->Branch("TrackEnergy",              &fParticleInfo.fTrackEnergy);
+    fNtuple->Branch("TrackEnergy_MM",              &fParticleInfo.fTrackEnergy_MM);
+    fNtuple->Branch("MaxEdepPosition",              &fParticleInfo.fMaxEdepPosition);
+    fNtuple->Branch("MaxEdepPositionZ",             &fParticleInfo.fMaxEdepPositionZ);
 
-  fNtuple->Branch("TrackStartPos",      &fParticleInfo.fTrackStartPos);
-  fNtuple->Branch("EventStartPos",      &fParticleInfo.fEventStartPos);
-  fNtuple->Branch("TrackVertexPosX_per_step",      &fParticleInfo.fTrackVertexPosX_per_step);
-  fNtuple->Branch("TrackVertexPosY_per_step",      &fParticleInfo.fTrackVertexPosY_per_step);
-  fNtuple->Branch("TrackVertexPosZ_per_step",      &fParticleInfo.fTrackVertexPosZ_per_step);
-  fNtuple->Branch("TrackdE_dx_per_step",           &fParticleInfo.fTrackdE_dx_per_step);
-  fNtuple->Branch("TrackLength_per_step",          &fParticleInfo.fTrackLength_per_step);
+    fNtuple->Branch("TrackStartPos",      &fParticleInfo.fTrackStartPos);
+    fNtuple->Branch("EventStartPos",      &fParticleInfo.fEventStartPos);
+    fNtuple->Branch("TrackVertexPosX_per_step",      &fParticleInfo.fTrackVertexPosX_per_step);
+    fNtuple->Branch("TrackVertexPosY_per_step",      &fParticleInfo.fTrackVertexPosY_per_step);
+    fNtuple->Branch("TrackVertexPosZ_per_step",      &fParticleInfo.fTrackVertexPosZ_per_step);
+    fNtuple->Branch("TrackdE_dx_per_step",           &fParticleInfo.fTrackdE_dx_per_step);
+    fNtuple->Branch("TrackLength_per_step",          &fParticleInfo.fTrackLength_per_step);
+
+  }
 
   //added on 2023.10.09, tree for digitization output
   fRawRootFile = new TFile(rawrootfile_name,"UPDATE");
@@ -253,26 +258,31 @@ void HistoManager::book()
   }
 
 
-  //=========================================================
-  G4cout<<"------>create track graph rootfile"<<G4endl;
+  if(AllFilesOutput){
+    //=========================================================
+    G4cout<<"------>create track graph rootfile"<<G4endl;
 
-  // G4String trackfile_name = "tracks_"+fFileName+".root";
-  G4cout<<"The output track file name is : "<<trackfile_name<<"\n"<< G4endl;
-  fGraphRootFile = new TFile(trackfile_name,"RECREATE");
+    // G4String trackfile_name = "tracks_"+fFileName+".root";
+    G4cout<<"The output track file name is : "<<trackfile_name<<"\n"<< G4endl;
+    fGraphRootFile = new TFile(trackfile_name,"RECREATE");
+  }
 
 }
 
 void HistoManager::save()
 {
   G4cout<<"<<------------HistoManager::save()-------------------->>"<<G4endl;
-  fRootFile->cd();
-  fNtuple->Write();
+  
   fRawRootFile->cd();
   fNtuple2->Write();
- // fRootFile->Write();
-  fRootFile->Close();
   fRawRootFile->Close();
-  fGraphRootFile->Close();
+  // fRootFile->Write();
+  if(AllFilesOutput){
+    fRootFile->cd();
+    fNtuple->Write();
+    fRootFile->Close();
+    fGraphRootFile->Close();
+  }
   G4cout<<"------>close rootfiles"<<G4endl;
 }
 
@@ -280,6 +290,8 @@ void HistoManager::save()
 
 void HistoManager::FillTrackGraph(TrackInfo* fTrackInfo, G4int nEvents, G4int nTracks, G4int nCounts){
     
+  if(!AllFilesOutput) return;
+  
   // if(nEvents>100)  return;
   G4double x, y, drift_distance;
   G4double dE_dx, tracklen;

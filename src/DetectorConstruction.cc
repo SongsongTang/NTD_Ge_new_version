@@ -100,6 +100,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4Element* O  = new G4Element("Oxygen",     symbol= "O" , z= 8. , a= 16.00*g/mole);
 	G4Element* N  = new G4Element("Nitrogen",     symbol= "N" , z= 7. , a= 14.00*g/mole);
 	G4Element* Si = new G4Element("Si",			symbol= "Si", z= 14., a= 28.00*g/mole);
+	G4Element* Fe = new G4Element("Iron", "Fe", z= 26., a= 55.85*g/mole);
+	G4Element* Mn = new G4Element("Manganese", "Mn", z= 25., a= 54.94*g/mole);
+	G4Element* Cr = new G4Element("Chromium", "Cr", z= 24., a= 52.00*g/mole);
+	G4Element* Ni = new G4Element("Nickel", "Ni", z= 28., a= 58.7*g/mole);
 	//Material--->PET C10H8O4
 	G4Material* PET = new G4Material("PET", density=1.38*g/cm3, ncomponents=3); //PET 200um
 	PET->AddElement(C, natoms=10);
@@ -141,9 +145,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	NeiC4H10->AddMaterial(Ne,     95.0*perCent);
 
 	//Material ---> Ar+iC4H10				//density is calculated by volume fraction 96.5/3.5
-	G4Material* AriC4H10 = new G4Material("AriC4H10", density = (0.001782 * 0.975 + 0.00251 * 0.025)*g/cm3, ncomponents = 2);
-	AriC4H10->AddMaterial(iC4H10, 	2.5*perCent);
-	AriC4H10->AddMaterial(Ar,	  	97.5*perCent);
+	G4Material* AriC4H10 = new G4Material("AriC4H10", density = (0.001782 * 0.965 + 0.00251 * 0.035)*g/cm3, ncomponents = 2);
+	AriC4H10->AddMaterial(iC4H10, 	3.5*perCent);
+	AriC4H10->AddMaterial(Ar,	  	96.5*perCent);
 
 	//Material ---> Kapton
 	G4Material* Kapton = new G4Material("Kapton", density = 1.43*g/cm3, ncomponents = 4);
@@ -157,6 +161,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	Wood->AddElement(H , 4);
 	Wood->AddElement(O , 1);
 	Wood->AddElement(C , 2);
+
+	G4Material* mat304steel = new G4Material("Stainless steel 304", 7.999*g/cm3, 6);
+	mat304steel->AddElement(Mn, 0.02);
+	mat304steel->AddElement(Si, 0.01);
+	mat304steel->AddElement(Cr, 0.19);
+	mat304steel->AddElement(Ni, 0.10);
+	mat304steel->AddElement(Fe, 0.6792);
+	mat304steel->AddElement(C, 0.0008);
 
 	//---------------construct detector---------------
 	// Full sphere shape
@@ -254,13 +266,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 	//shielding shell parameters
 	G4double ShellSize = 30*cm;
-	G4double ShellThickness = 1*cm;
+	G4double ShellThickness = 2*cm;
 	G4double ShellHeight = 15*cm;
 
 	G4double Cuthickness3 = 1*cm;
 
 	//whether to put the source under the TPC
-	G4bool IfSource = true;
+	G4bool IfSource = false;
 
 	// distance of the source bottom from the film
 	G4double distance = 58*mm;
@@ -319,26 +331,47 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //=============Added part: a copper shell around the TPC ==================
 
-	// G4ThreeVector positionShell = G4ThreeVector(0., 0., -2);		//(0,0,-3.35)cm center, top at z=0
+	G4ThreeVector positionShell = G4ThreeVector(0., 0., -2*cm);		//(0,0,-3.35)cm center, top at z=0
 
-	// G4Box* solidShellOut = new G4Box("ShellOut",                                    // its name
-	// 		0.5*ShellSize+ShellThickness, 0.5*ShellSize+ShellThickness, 0.5*ShellHeight+ShellThickness);                      // its size
+	G4Box* solidShellOut = new G4Box("ShellOut",                                    // its name
+			0.5*ShellSize+ShellThickness, 0.5*ShellSize+ShellThickness, 0.5*ShellHeight+ShellThickness);                      // its size
 	
-	// G4Box* solidShellIn = new G4Box("ShellIn",                                    // its name
-	// 		0.5*ShellSize, 0.5*ShellSize, 0.5*ShellHeight);                      // its size
+	G4Box* solidShellIn = new G4Box("ShellIn",                                    // its name
+			0.5*ShellSize, 0.5*ShellSize, 0.5*ShellHeight);                      // its size
 
-	// G4SubtractionSolid* solidShell = new G4SubtractionSolid("Shell",solidShellOut,solidShellIn);
+	G4SubtractionSolid* solidShell = new G4SubtractionSolid("Shell",solidShellOut,solidShellIn);
 	
-	// G4LogicalVolume* logicShell = new G4LogicalVolume(
-	// 		solidShell,                                    // its solid
-	// 		Pb,                                    // its material
-	// 		"Shell");                                      // its name
+	G4LogicalVolume* logicShell = new G4LogicalVolume(
+			solidShell,                                    // its solid
+			Pb,                                    // its material
+			"Shell");                                      // its name
+
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionShell,                                 // at (0,0,0)
+			logicShell,                                    // its logical volume
+			"Shell",                                       // its name
+			logicWorld,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
+
+	// G4double Althickness = 2*mm;
+	
+	// G4Box* solidAlShellIn = new G4Box("AlShellIn",                                    // its name
+	// 		0.5*ShellSize-Althickness, 0.5*ShellSize-Althickness, 0.5*ShellHeight-Althickness);                      // its size
+
+	// G4SubtractionSolid* solidAlShell = new G4SubtractionSolid("AlShell",solidShellIn,solidAlShellIn);
+	
+	// G4LogicalVolume* logicAlShell = new G4LogicalVolume(
+	// 		solidAlShell,                                    // its solid
+	// 		Al,                                    // its material
+	// 		"AlShell");                                      // its name
 
 	// new G4PVPlacement(
 	// 		0,                                           // no rotation
 	// 		positionShell,                                 // at (0,0,0)
-	// 		logicShell,                                    // its logical volume
-	// 		"Shell",                                       // its name
+	// 		logicAlShell,                                    // its logical volume
+	// 		"AlShell",                                       // its name
 	// 		logicWorld,                                  // its mother  volume
 	// 		false,                                       // no boolean operation
 	// 		0);                                          // copy number
@@ -347,28 +380,28 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //============Add wooden desk under the TPC ===============
 
-	G4double distance_desk = 7.6*cm;
-	G4double thickness_desk = 5*cm;
-	G4double size_desk = 50*cm;
+	// G4double distance_desk = 7.6*cm;
+	// G4double thickness_desk = 5*cm;
+	// G4double size_desk = 50*cm;
 	
-	G4ThreeVector positionDesk = G4ThreeVector(0., 0., -TPCSizeZ-distance_desk-0.5*thickness_desk);	
+	// G4ThreeVector positionDesk = G4ThreeVector(0., 0., -TPCSizeZ-distance_desk-0.5*thickness_desk);	
 
-	G4Box* solidDesk = new G4Box("Desk",                                    // its name
-			0.5*size_desk, 0.5*size_desk, 0.5*thickness_desk);                      // its size
+	// G4Box* solidDesk = new G4Box("Desk",                                    // its name
+	// 		0.5*size_desk, 0.5*size_desk, 0.5*thickness_desk);                      // its size
 
-	G4LogicalVolume* logicDesk = new G4LogicalVolume(
-			solidDesk,                                    // its solid
-			Wood,                                    // its material
-			"Desk");                                      // its name
+	// G4LogicalVolume* logicDesk = new G4LogicalVolume(
+	// 		solidDesk,                                    // its solid
+	// 		Wood,                                    // its material
+	// 		"Desk");                                      // its name
 
-	new G4PVPlacement(
-			0,                                           // no rotation
-			positionDesk,                                 // at (0,0,0)
-			logicDesk,                                    // its logical volume
-			"Desk",                                       // its name
-			logicWorld,                                  // its mother  volume
-			false,                                       // no boolean operation
-			0);                                          // copy number
+	// new G4PVPlacement(
+	// 		0,                                           // no rotation
+	// 		positionDesk,                                 // at (0,0,0)
+	// 		logicDesk,                                    // its logical volume
+	// 		"Desk",                                       // its name
+	// 		logicWorld,                                  // its mother  volume
+	// 		false,                                       // no boolean operation
+	// 		0);                                          // copy number
 
 //===================================================
 

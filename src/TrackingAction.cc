@@ -489,21 +489,21 @@ void TrackingAction::FillChannelWaveforms()
             for(int k=0;k<Nsp;k++){
                 waveform_X_int[i][k] = static_cast<int>(waveform_X[i][k]);
             }
-            if(isefficent) {
-                int maxpoint = 0;
-                int maxvalue_int = 0;
-                double maxvalue_double = 0;
-                for(int k=0;k<Nsp;k++) {
-                    if(waveform_X[i][k] > maxvalue_double) {
-                        maxpoint = k;
-                        maxvalue_double = waveform_X[i][k];
-                        maxvalue_int = waveform_X_int[i][k];
-                    }
-                }
-                // if(maxvalue_int ==0) {
-                //     G4cout << "This waveform's maximum value is 0, it's maximum originally is: " << maxvalue_double << " at " << maxpoint << G4endl;
-                // }
-            }
+            // if(isefficent) {
+            //     int maxpoint = 0;
+            //     int maxvalue_int = 0;
+            //     double maxvalue_double = 0;
+            //     for(int k=0;k<Nsp;k++) {
+            //         if(waveform_X[i][k] > maxvalue_double) {
+            //             maxpoint = k;
+            //             maxvalue_double = waveform_X[i][k];
+            //             maxvalue_int = waveform_X_int[i][k];
+            //         }
+            //     }
+            //     // if(maxvalue_int ==0) {
+            //     //     G4cout << "This waveform's maximum value is 0, it's maximum originally is: " << maxvalue_double << " at " << maxpoint << G4endl;
+            //     // }
+            // }
         }
 
         if(charge_Y[i].size()>0){
@@ -531,21 +531,22 @@ void TrackingAction::FillChannelWaveforms()
             for(int k=0;k<Nsp;k++){
                 waveform_Y_int[i][k] = static_cast<int>(waveform_Y[i][k]);
             }
-            if(isefficent) {
-                int maxpoint = 0;
-                int maxvalue_int = 0;
-                double maxvalue_double = 0;
-                for(int k=0;k<Nsp;k++) {
-                    if(waveform_Y[i][k] > maxvalue_double) {
-                        maxpoint = k;
-                        maxvalue_double = waveform_Y[i][k];
-                        maxvalue_int = waveform_Y_int[i][k];
-                    }
-                }
-                // if(maxvalue_int ==0) {
-                //     G4cout << "This waveform's maximum value is 0, it's maximum originally is: " << maxvalue_double << " at " << maxpoint << G4endl;
-                // }
-            }
+            
+            // if(isefficent) {
+            //     int maxpoint = 0;
+            //     int maxvalue_int = 0;
+            //     double maxvalue_double = 0;
+            //     for(int k=0;k<Nsp;k++) {
+            //         if(waveform_Y[i][k] > maxvalue_double) {
+            //             maxpoint = k;
+            //             maxvalue_double = waveform_Y[i][k];
+            //             maxvalue_int = waveform_Y_int[i][k];
+            //         }
+            //     }
+            //     // if(maxvalue_int ==0) {
+            //     //     G4cout << "This waveform's maximum value is 0, it's maximum originally is: " << maxvalue_double << " at " << maxpoint << G4endl;
+            //     // }
+            // }
         }
     }
     // //using float form of the waveform

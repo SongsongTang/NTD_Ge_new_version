@@ -24,19 +24,18 @@ namespace TPCsystem{
   const double E_ion = 26.0;          //ionization energy of Ar, in eV
   const double timestep = 40.0;       //the timestep of one ADC sampling point
   
-  // const double v_drift = 3.5;         //drift velocity in cm/us
-
-  //for Ar+2.5% iC4H10
-  const double v_drift = 3.46;         //drift velocity in cm/us
+  //for Ar+3.5% iC4H10 @ 120V/cm
+  const double v_drift = 3.72;         //drift velocity in cm/us
 
   //diffusion coefficients, the relation between diffused distance sigma and drift distance z is :
   // sigma_(t or l) = (dt or dl)* sqrt(z)
-  // const double dl = 0.035;            //longitudinal diffusion coefficient in Ar+3.5% iC4H10 at ~150V/cm (unit is cm^0.5)
-  // const double dt = 0.056;            //transverse diffusion coefficient in Ar+3.5% iC4H10 at ~150V/cm (unit is cm^0.5)
+  const double dl = 0.037;            //longitudinal diffusion coefficient in Ar+3.5% iC4H10 at ~120V/cm (unit is cm^0.5)
+  const double dt = 0.055;            //transverse diffusion coefficient in Ar+3.5% iC4H10 at ~120V/cm (unit is cm^0.5)
 
-  //for Ar+2.5% iC4H10
-  const double dl = 0.0435;
-  const double dt = 0.0656;
+  // //for Ar+2.5% iC4H10 @ 100V/cm
+  // const double v_drift = 3.46;         //drift velocity in cm/us
+  // const double dl = 0.0435;
+  // const double dt = 0.0656;
 
   const bool on_plane_spread = true;    // whether to enable spread sim on the resist layer
   const double sigma_spread = 0.5;      //sigma of the signal spreading due to the resist layer
@@ -61,7 +60,7 @@ namespace TPCsystem{
   //maximum value position of the response function
   const int peak_pos = 45;
   //gain of the TPC system
-  const double gain = 3000;
+  const double gain = 2300;
   //factor for the response function (for 1pC CSA gain)
   const double factor = 1000;
   //time bin width for the response function

@@ -296,6 +296,7 @@ public:
   TFile* fRawRootFile;
   TTree* fNtuple;
   TTree* fNtuple2;
+  G4bool AllFilesOutput;      //choose whether to generate output MC root file and track file
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

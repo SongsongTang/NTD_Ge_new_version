@@ -42,6 +42,8 @@
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
+// #include "TRandom.h"
+#include <random>
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 //
@@ -84,7 +86,7 @@ void SteppingAction::UserSteppingAction(const G4Step *aStep)
   //   return;
 
   // collect energy and track length step by step
-  G4double edep = aStep->GetTotalEnergyDeposit();
+  G4double edep = aStep->GetTotalEnergyDeposit()-aStep->GetNonIonizingEnergyDeposit();
   G4double steplen = aStep->GetStepLength();
 
   /*
@@ -210,6 +212,7 @@ void SteppingAction::DriftOneElectron(G4ThreeVector steppos, G4double edep)
   // G4cout << "===========>> starting DriftOneElectron()" << G4endl;
   // the diffusion effect during drifting can be added later
   double drift_distance = -steppos.z();
+  if(drift_distance < 0) return;
   double sigma_l = dl*sqrt(drift_distance*0.1)*10;         //in mm
   double sigma_t = dt*sqrt(drift_distance*0.1)*10;         //in mm
   if(drift_distance>70.) {
@@ -218,11 +221,34 @@ void SteppingAction::DriftOneElectron(G4ThreeVector steppos, G4double edep)
     G4cout << "Step position: " << steppos.x() << ", " << steppos.y() << ", " << steppos.z() <<G4endl;
   }
 
-  drift_distance += G4RandGauss::shoot(0.,sigma_l);
-  double projected_x = steppos.x()+G4RandGauss::shoot(0.,sigma_t);
-  double projected_y = steppos.y()+G4RandGauss::shoot(0.,sigma_t);
+  // TRandom *randomGenerator = new TRandom();
+  std::default_random_engine generator;
+  std::normal_distribution<double> distributionL(0.0, sigma_l);
+  std::normal_distribution<double> distributionT(0.0, sigma_t);
 
-  double velocity = v_drift;
+  // double sigma_buf;
+  double sigma1, sigma2;
+    
+  // sigma1 = randomGenerator->Gaus(0, sigma_l);
+  // sigma1 = G4RandGauss::shoot(0, sigma_l);
+  sigma1 = distributionL(generator);
+
+  drift_distance += sigma1;
+  
+  // sigma1 = randomGenerator->Gaus(0, sigma_t);
+  // sigma2 = randomGenerator->Gaus(0, sigma_t);
+  // sigma1 = G4RandGauss::shoot(0, sigma_t);
+  // sigma2 = G4RandGauss::shoot(0, sigma_t);
+  sigma1 = distributionT(generator);
+  sigma2 = distributionT(generator);
+
+  double projected_x = steppos.x()+sigma1;
+  double projected_y = steppos.y()+sigma2;
+
+  G4AnalysisManager* analysis = G4AnalysisManager::Instance();
+  analysis->FillH2(0,projected_x,projected_y);
+
+  // double velocity = v_drift;
 
   // double x_inplane = projected_x + nch/2*chnwidth;
   // double y_inplane = projected_y + nch/2*chnwidth;

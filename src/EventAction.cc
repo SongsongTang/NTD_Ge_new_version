@@ -89,7 +89,7 @@ void EventAction::EndOfEventAction(const G4Event* evt)
             << " :" + fDecayChain << G4endl;
     // G4cout<<"end of event "<<fHistoManager_Event->fParticleInfo.nTrack<<" "<<fHistoManager_Event->fParticleInfo.fTrackTime[0]<<G4endl;
     //Fill this event, only fill when there is at least one track!!
-    if(fHistoManager_Event->fParticleInfo.nTrack>0) fHistoManager_Event->fNtuple->Fill();
+    if(fHistoManager_Event->fParticleInfo.nTrack>0 && fHistoManager_Event->AllFilesOutput) fHistoManager_Event->fNtuple->Fill();
 
     G4AnalysisManager* analysis = G4AnalysisManager::Instance();
     if(fCount){
