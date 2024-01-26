@@ -253,8 +253,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4double Cuthickness = 10e-4*cm;
 	
 	// parameter of the Cu board below TPC
-	G4double gap = 2*cm;
-	G4double Cuthickness2 = 0.5*cm;
+	G4double gap = 0*cm;
+	G4double Cuthickness2 = 1*cm;
 
 	// parameter of the field cage
 	G4double FieldCageSize = 16.6*cm;
@@ -269,7 +269,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4double ShellThickness = 2*cm;
 	G4double ShellHeight = 15*cm;
 
-	G4double Cuthickness3 = 1*cm;
+	// G4double Cuthickness3 = 2*cm;
 
 	//whether to put the source under the TPC
 	G4bool IfSource = false;
@@ -288,11 +288,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	// G4ThreeVector positionCubrd2 = G4ThreeVector(0., CudeltaY, -TPCSizeZ-gap-0.5*Cuthickness2);	
 
 	// G4Box* solidCubrd2 = new G4Box("Cu_board2",                                    // its name
-	// 		0.5*CusizeX, 0.5*CusizeY, 0.5*Cuthickness2);                      // its size
+	// 		0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Cuthickness2);                      // its size
 
 	// G4LogicalVolume* logicCubrd2 = new G4LogicalVolume(
 	// 		solidCubrd2,                                    // its solid
-	// 		Cu,                                    // its material
+	// 		Pb,                                    // its material
 	// 		"Cu_board2");                                      // its name
 
 	// new G4PVPlacement(
@@ -308,14 +308,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //=======Copper board above anti-coincident detector (if exists)=====================
 
-	// G4ThreeVector positionCubrd3 = G4ThreeVector(0., CudeltaY, PCBthickness+Cuthickness+PCBthickness+MMGasThickness+gap);	
+	// G4ThreeVector positionCubrd3 = G4ThreeVector(0., CudeltaY, PCBthickness+MMSizeZ+gap+0.5*Cuthickness2);	
 
 	// G4Box* solidCubrd3 = new G4Box("Cu_board3",                                    // its name
-	// 		0.5*CusizeX*1.2, 0.5*CusizeY*1.2, 0.5*Cuthickness3);                      // its size
+	// 		0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Cuthickness2);                      // its size
 
 	// G4LogicalVolume* logicCubrd3 = new G4LogicalVolume(
 	// 		solidCubrd3,                                    // its solid
-	// 		Cu,                                    // its material
+	// 		Pb,                                    // its material
 	// 		"Cu_board3");                                      // its name
 
 	// new G4PVPlacement(
@@ -331,31 +331,31 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //=============Added part: a copper shell around the TPC ==================
 
-	G4ThreeVector positionShell = G4ThreeVector(0., 0., -2*cm);		//(0,0,-3.35)cm center, top at z=0
+	// G4ThreeVector positionShell = G4ThreeVector(0., 0., -2*cm);		//(0,0,-3.35)cm center, top at z=0
 
-	G4Box* solidShellOut = new G4Box("ShellOut",                                    // its name
-			0.5*ShellSize+ShellThickness, 0.5*ShellSize+ShellThickness, 0.5*ShellHeight+ShellThickness);                      // its size
+	// G4Box* solidShellOut = new G4Box("ShellOut",                                    // its name
+	// 		0.5*ShellSize+ShellThickness, 0.5*ShellSize+ShellThickness, 0.5*ShellHeight+ShellThickness);                      // its size
 	
-	G4Box* solidShellIn = new G4Box("ShellIn",                                    // its name
-			0.5*ShellSize, 0.5*ShellSize, 0.5*ShellHeight);                      // its size
+	// G4Box* solidShellIn = new G4Box("ShellIn",                                    // its name
+	// 		0.5*ShellSize, 0.5*ShellSize, 0.5*ShellHeight);                      // its size
 
-	G4SubtractionSolid* solidShell = new G4SubtractionSolid("Shell",solidShellOut,solidShellIn);
+	// G4SubtractionSolid* solidShell = new G4SubtractionSolid("Shell",solidShellOut,solidShellIn);
 	
-	G4LogicalVolume* logicShell = new G4LogicalVolume(
-			solidShell,                                    // its solid
-			Pb,                                    // its material
-			"Shell");                                      // its name
+	// G4LogicalVolume* logicShell = new G4LogicalVolume(
+	// 		solidShell,                                    // its solid
+	// 		Pb,                                    // its material
+	// 		"Shell");                                      // its name
 
-	new G4PVPlacement(
-			0,                                           // no rotation
-			positionShell,                                 // at (0,0,0)
-			logicShell,                                    // its logical volume
-			"Shell",                                       // its name
-			logicWorld,                                  // its mother  volume
-			false,                                       // no boolean operation
-			0);                                          // copy number
+	// new G4PVPlacement(
+	// 		0,                                           // no rotation
+	// 		positionShell,                                 // at (0,0,0)
+	// 		logicShell,                                    // its logical volume
+	// 		"Shell",                                       // its name
+	// 		logicWorld,                                  // its mother  volume
+	// 		false,                                       // no boolean operation
+	// 		0);                                          // copy number
 
-	// G4double Althickness = 2*mm;
+	// G4double Althickness = 4*mm;
 	
 	// G4Box* solidAlShellIn = new G4Box("AlShellIn",                                    // its name
 	// 		0.5*ShellSize-Althickness, 0.5*ShellSize-Althickness, 0.5*ShellHeight-Althickness);                      // its size
