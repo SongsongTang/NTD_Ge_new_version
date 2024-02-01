@@ -51,7 +51,7 @@ target_link_libraries(NTD_Ge ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 # relies on these scripts being in the current working directory.
 #
 set(DBDecay_SCRIPTS
-    Co60.mac  NTD_Ge.in  vis.mac  fullChain.mac  pythia.mac  pythia_event.data
+    bkg.mac run_beta_new_geometry.mac  pythia.mac  pythia_event.data
   )
 
 foreach(_script ${DBDecay_SCRIPTS})
