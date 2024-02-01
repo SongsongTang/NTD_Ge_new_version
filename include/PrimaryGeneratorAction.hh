@@ -35,6 +35,9 @@
 //==========================
 //ordinary setup
 
+#define cosmic_ray false
+#if cosmic_ray==false
+
 #ifndef PrimaryGeneratorAction_h
 #define PrimaryGeneratorAction_h 1
 
@@ -86,58 +89,60 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 //============================================
 // for muon generation
 
+#else
 
 
+#ifndef PrimaryGeneratorAction_h
+#define PrimaryGeneratorAction_h 1
 
-// #ifndef PrimaryGeneratorAction_h
-// #define PrimaryGeneratorAction_h 1
+#include "G4VUserPrimaryGeneratorAction.hh"
+#include "G4ParticleGun.hh"
+#include "globals.hh"
+#include "G4ThreeVector.hh"
+#include "G4GeneralParticleSource.hh"
+#include "G4ParticleDefinition.hh"
+#include "G4ParticleTable.hh"
+#include "EcoMug.h"
 
-// #include "G4VUserPrimaryGeneratorAction.hh"
-// #include "G4ParticleGun.hh"
-// #include "globals.hh"
-// #include "G4ThreeVector.hh"
-// #include "G4GeneralParticleSource.hh"
-// #include "G4ParticleDefinition.hh"
-// #include "G4ParticleTable.hh"
-// #include "EcoMug.h"
+class G4VPrimaryGenerator;
+class G4ParticleGun;
+class G4Event;
+class PrimaryGeneratorMessenger;
+class DetectorConstruction;
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-// class G4VPrimaryGenerator;
-// class G4ParticleGun;
-// class G4Event;
-// class PrimaryGeneratorMessenger;
-// class DetectorConstruction;
-// //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+{
+  public:
+    PrimaryGeneratorAction(DetectorConstruction*);    
+   ~PrimaryGeneratorAction();
 
-// class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
-// {
-//   public:
-//     PrimaryGeneratorAction(DetectorConstruction*);    
-//    ~PrimaryGeneratorAction();
+  public:
+    virtual void GeneratePrimaries(G4Event*);
+    const G4ParticleGun* GetParticleGun() const { return fParticleGun;}; 
 
-//   public:
-//     virtual void GeneratePrimaries(G4Event*);
-//     const G4ParticleGun* GetParticleGun() const { return fParticleGun;}; 
+  private:
+    G4VPrimaryGenerator* HEPEvt;
+//    G4VPrimaryGenerator* particleGun;
+    PrimaryGeneratorMessenger* messenger;
+    G4bool useHEPEvt;
+    G4ParticleGun * fParticleGun; // pointer a to G4 gun class
+    G4ParticleDefinition *mu_plus;
+    G4ParticleDefinition *mu_minus;
+    EcoMug fMuonGen;
+    DetectorConstruction* fDetector;
 
-//   private:
-//     G4VPrimaryGenerator* HEPEvt;
-// //    G4VPrimaryGenerator* particleGun;
-//     PrimaryGeneratorMessenger* messenger;
-//     G4bool useHEPEvt;
-//     G4ParticleGun * fParticleGun; // pointer a to G4 gun class
-//     G4ParticleDefinition *mu_plus;
-//     G4ParticleDefinition *mu_minus;
-//     EcoMug fMuonGen;
-//     DetectorConstruction* fDetector;
+  public:
+    inline void SetHEPEvtGenerator(G4bool f)
+    { useHEPEvt = f;}
+    inline G4bool GetHEPEvtGenerator()
+    { return useHEPEvt;}
+};
 
-//   public:
-//     inline void SetHEPEvtGenerator(G4bool f)
-//     { useHEPEvt = f;}
-//     inline G4bool GetHEPEvtGenerator()
-//     { return useHEPEvt;}
-// };
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-// //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+#endif
 
-// #endif
+#endif
 
 //============================

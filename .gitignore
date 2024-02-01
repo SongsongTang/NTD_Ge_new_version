@@ -1,9 +1,6 @@
 *.a
 *.out
-*.in
 *.o
 *.root
-*.mac
 build/
 .vscode/
-pythia_event.data
