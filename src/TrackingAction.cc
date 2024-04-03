@@ -49,6 +49,7 @@
 #include <iostream>
 #include <iomanip>
 #include "math.h"
+#include <random>
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 using namespace TPCsystem;
@@ -147,8 +148,9 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
     MaxEdep = 0.;
     MaxEdepPos = 0.;
     MaxEdepPosZ = 0.;
-    fInScoringVolume1=true;      //at the beginning of a track, set the default value to be true
-    fInScoringVolume2=false;      //at the beginning of a track, set the default value to be false
+    fSelectTrack = true;          //at the beginning of a track, set the default value to be true
+    fNotFiltered=true;      //at the beginning of a track, set the default value to be true
+    fHitSV=false;      //at the beginning of a track, set the default value to be false
     fTrackInfo_Stepping.reset();    //reset the recorded step points at each new track
     if(!IsEmpty) ClearChannelBuffer();           //clear the tracking digitization info of the former track
 
@@ -224,12 +226,18 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
     KinEnergy_start = track->GetKineticEnergy();
 
     //Important: the following part should be switched for alpha/beta track information extracting!!!
-    // if(KinEnergy_start < 10*keV || name != "alpha") fInScoringVolume1 = false;
-    if(/* KinEnergy_start < 10*keV ||  */name != "e-") fInScoringVolume1 = false;
-    if(creator_process == "eIoni" || creator_process == "ionIoni"/*  || name != "gamma" */) fInScoringVolume1 = false;                 //for Fe55 source simulation
-    // if(KinEnergy_start < 10*keV || (name != "mu+" && name != "mu-")) fInScoringVolume1 = false;         // for cosmic ray simulation
-    // if(ID!=1) fInScoringVolume1 = false;                //Test: only save primary beta tracks (for run12_2 only)!
-    // if(parentID!=1 && parentID!=2) fInScoringVolume1 = false;           //Test2: only save Sr90/Y90 decay primary betas (for Sr90 beta source run only)!
+    // if(KinEnergy_start < 10*keV || name != "alpha") fSelectTrack = false;
+#if simulation_type == 0
+    if(/* KinEnergy_start < 10*keV ||  */name != "e-") fSelectTrack = false;
+    if(creator_process == "eIoni" || creator_process == "ionIoni"/*  || name != "gamma" */) fSelectTrack = false;                 //for Fe55 source simulation
+#elif simulation_type ==1
+    if(KinEnergy_start < 10*keV || name != "alpha") fSelectTrack = false;
+#else
+    if(name != "mu+" && name != "mu-") fSelectTrack = false;         // for cosmic ray simulation
+#endif
+    // if(KinEnergy_start < 10*keV || (name != "mu+" && name != "mu-")) fSelectTrack = false;         // for cosmic ray simulation
+    // if(ID!=1) fSelectTrack = false;                //Test: only save primary beta tracks (for run12_2 only)!
+    // if(parentID!=1 && parentID!=2) fSelectTrack = false;           //Test2: only save Sr90/Y90 decay primary betas (for Sr90 beta source run only)!
 
 }
 
@@ -302,7 +310,14 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
 
 
     G4String LastVolumeName = track->GetVolume()->GetName();
-    if (fInScoringVolume1 && fInScoringVolume2/*  && LastVolumeName != "Gas"  */&& LastVolumeName != "GasEff2" && !fReject)
+    if(LastVolumeName == "GasEff2") fNotFiltered = false;
+    
+    // generate random point to introduce the effect of efficiency of anticoincidence
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    double inefficiency = distribution(generator);
+
+    if (fSelectTrack && (fNotFiltered || ( inefficiency < 0.05 )) && fHitSV/*  && LastVolumeName != "Gas"  */ && !fReject)
     {   //count conditions:
         //  this e- track does NOT cross the Al frame
         //  this track has at least part of it in the gas volume

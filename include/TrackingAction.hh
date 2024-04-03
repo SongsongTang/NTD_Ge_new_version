@@ -62,10 +62,12 @@ class TrackingAction : public G4UserTrackingAction {
     
     void SetFullChain(G4bool flag) { fFullChain = flag;};
 
-    void SetVolumeFlag1(G4bool flag){ fInScoringVolume1 = flag;};
-    G4bool GetVolumeFlag1(){return fInScoringVolume1;};
-    void SetVolumeFlag2(G4bool flag){ fInScoringVolume2 = flag;};
-    G4bool GetVolumeFlag2(){return fInScoringVolume2;};
+    void SetSelectTrackFlag(G4bool flag){ fSelectTrack = flag;};
+    G4bool GetSelectTrackFlag(){return fSelectTrack;};
+    void SetNotFilteredFlag(G4bool flag){ fNotFiltered = flag;};
+    G4bool GetNotFilteredFlag(){return fNotFiltered;};
+    void SetHitSVFlag(G4bool flag){ fHitSV = flag;};
+    G4bool GetHitSVFlag(){return fHitSV;};
     // G4double zmax;
     G4double MaxPosition[3];
     // G4double zmin;
@@ -164,8 +166,9 @@ class TrackingAction : public G4UserTrackingAction {
   G4double fTrackEnergyInSV;
   G4double fTrackEnergyInMM;
   G4bool   fFullChain;
-  G4bool fInScoringVolume1;
-  G4bool fInScoringVolume2;
+  G4bool fSelectTrack;        //flag to label whether this track is interested
+  G4bool fNotFiltered;
+  G4bool fHitSV;
   G4int nCounts;
   ParticleInfo fParticleInfo_Tracking;
   TrackInfo fTrackInfo_Stepping;

@@ -35,11 +35,13 @@
 //==========================
 //ordinary setup
 
-#define cosmic_ray false
-#if cosmic_ray==false
-
 #ifndef PrimaryGeneratorAction_h
 #define PrimaryGeneratorAction_h 1
+
+// definition of simulation type is here
+#include "Constant.h"
+
+#if simulation_type != 2
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ParticleGun.hh"
@@ -82,8 +84,6 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#endif
-
 
 
 //============================================
@@ -91,9 +91,6 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 
 #else
 
-
-#ifndef PrimaryGeneratorAction_h
-#define PrimaryGeneratorAction_h 1
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ParticleGun.hh"

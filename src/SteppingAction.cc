@@ -118,14 +118,14 @@ void SteppingAction::UserSteppingAction(const G4Step *aStep)
   }
 
   // NEW PART: if this step does NOT begin in the scoring volume, drops it
-  if (fTrackingAction->GetVolumeFlag1())
+  if (fTrackingAction->GetSelectTrackFlag() && fTrackingAction->GetNotFilteredFlag())
   {
     // if the previous tracks are ALL NOT in the periphery volume and the anticoincident MM region
     if (/* preVolumeName == "Gas" ||  */preVolumeName == "GasEff2")
-      fTrackingAction->SetVolumeFlag1(false); // this means the track get into the frame
+      fTrackingAction->SetNotFilteredFlag(false); // this means the track get into the frame
     if (preVolumeName == "Gas" || preVolumeName == "GasEff")
     {
-      fTrackingAction->SetVolumeFlag2(true); // this means this track get into the gas volume
+      fTrackingAction->SetHitSVFlag(true); // this means this track get into the gas volume
 
       // //Add secondary particles' energy
       // G4TrackVector* trackvector = astep->GetSecondary();

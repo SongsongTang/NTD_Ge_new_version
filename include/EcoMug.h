@@ -751,6 +751,74 @@ public:
   };
   ///////////////////////////////////////////////////////////////
 
+  // Gaisser function
+  // input unit: rad, GeV
+  // output unit: m-2*s-1*sr-1
+  double fluxfunc(double theta, double energy)
+  {
+      double p1 = 0.102573;
+      double p2 = -0.068287;
+      double p3 = 0.958633;
+      double p4 = 0.0407253;
+      double p5 = 0.817285;
+
+      double cosThetaStar = sqrt((cos(theta)*cos(theta) + p1*p1 + p2*pow(cos(theta), p3) + p4*pow(cos(theta), p5)) / (1 + p1*p1 + p2 + p4));
+      double energyStar = energy * (1 + 3.64/energy/pow(cosThetaStar, 1.29));
+
+      double flux = 0.14
+          * pow(energyStar, -2.7)
+          * (1 / (1+1.1*energy*cosThetaStar/115)
+             + 0.054 / (1+1.1*energy*cosThetaStar/850));
+
+      flux *= 1e4;
+
+      return flux;
+  };
+
+  // added by zry: intregral over p and angle to calculate the muon flux in 1/cm^2/min
+  void CalulateFlux(){
+    int nbins_theta = 900;
+    double theta_bin = (mMaximumTheta - mMinimumTheta)/nbins_theta;
+    int nbins_p = 10000;
+    double p_bin = (mMaximumMomentum - mMinimumMomentum)/nbins_p;
+    // double E_min = sqrt(mMinimumMomentum*mMinimumMomentum+0.1057*0.1057)-0.1057;
+    // double E_max = sqrt(mMaximumMomentum*mMaximumMomentum+0.1057*0.1057)-0.1057;
+    // double E_bin = (E_max-E_min)/nbins_p;
+
+    double J_integral = 0.;
+    double J_integral_Gaisser = 0.;
+
+    for(int n_theta = 0; n_theta<nbins_theta; n_theta++){
+      for(int n_p = 0; n_p<nbins_p; n_p++){
+
+        double theta = mMinimumTheta + n_theta*theta_bin;
+        double p = mMinimumMomentum + n_p*p_bin;
+
+        // function format is from EcoMug paper
+        if(mGenMethod == Sky){
+          double n_modified = 2.856-0.655*log(p);
+          if (n_modified < 0.1) n_modified = 0.1;
+          J_integral += 1600*pow(p+2.68,-3.175)*pow(p, 0.279)*pow(cos(theta), n_modified+1)*sin(theta)*2*M_PI*theta_bin*p_bin;
+
+
+        }
+        else{
+          std::cout << "Other types of sources used, not calculated yet! " << std::endl;
+        }
+
+        double E = sqrt(p*p+0.1057*0.1057)-0.1057;
+        double E_bin = sqrt((p+p_bin)*(p+p_bin)+0.1057*0.1057)-0.1057 - E;
+        J_integral_Gaisser += fluxfunc(theta, E)*sin(theta)*2*M_PI*theta_bin*E_bin;
+
+        // if(n_p == 0){std::cout << "EcoMug: " << J_integral << " Gaisser: " << J_integral_Gaisser << " ratio: " << J_integral_Gaisser/J_integral << std::endl;}
+
+      }
+    }
+
+    // std::cout << "Calculated cosmic ray muon flux is: " << J_integral << " /m^2/s , that is: " << J_integral*60/10000 << " /cm^2/min." << std::endl;
+    // std::cout << "Calculated Gaisser cosmic ray muon flux is: " << J_integral_Gaisser << " /m^2/s , that is: " << J_integral_Gaisser*60/10000 << " /cm^2/min." << std::endl;
+  };
+
 };
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////

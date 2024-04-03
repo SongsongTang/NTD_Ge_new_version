@@ -35,10 +35,11 @@
 //==========================
 //ordinary setup
 
-#define cosmic_ray false
-#if cosmic_ray==false
+
 
 #include "PrimaryGeneratorAction.hh"
+
+#if simulation_type != 2
 
 #include "PrimaryGeneratorMessenger.hh"
 #include "G4Event.hh"
@@ -110,8 +111,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //==================================================
 // for muon generation
 
-#include "PrimaryGeneratorAction.hh"
-
 #include "PrimaryGeneratorMessenger.hh"
 #include "G4Event.hh"
 #include "G4HEPEvtInterface.hh"
@@ -143,7 +142,8 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det)
   // HEPEvt = new G4HEPEvtInterface(filename);
   fMuonGen.SetUseSky();
   fMuonGen.SetSkySize({{300.*mm, 300.*mm}});
-  fMuonGen.SetSkyCenterPosition({{0., 0., 50.}});
+  fMuonGen.SetSkyCenterPosition({{0., 0., 15.}});
+  fMuonGen.CalulateFlux();
 
   fParticleGun  = new G4ParticleGun(1);
   mu_plus = G4ParticleTable::GetParticleTable()->FindParticle("mu+");
