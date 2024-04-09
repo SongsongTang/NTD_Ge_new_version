@@ -317,7 +317,7 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     double inefficiency = distribution(generator);
 
-    if (fSelectTrack && (fNotFiltered || ( inefficiency < 0.05 )) && fHitSV/*  && LastVolumeName != "Gas"  */ && !fReject)
+    if (fSelectTrack && (fNotFiltered || ( inefficiency < 0 )) && fHitSV/*  && LastVolumeName != "Gas"  */ && !fReject)
     {   //count conditions:
         //  this e- track does NOT cross the Al frame
         //  this track has at least part of it in the gas volume

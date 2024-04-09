@@ -272,7 +272,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	// G4double Cuthickness3 = 2*cm;
 
 	//whether to put the source under the TPC
-	G4bool IfSource = false;
+	G4bool IfSource = true;
 
 	// distance of the source bottom from the film
 	G4double distance = 58*mm;

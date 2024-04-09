@@ -1,7 +1,7 @@
 #ifndef Constant_h
 #define Constant_h
 
-#define simulation_type 2     // 0: beta simulation(including major bkg simulation), 1: alpha simulation, 2: cosmic ray muon simulation
+#define simulation_type 0     // 0: beta simulation(including major bkg simulation), 1: alpha simulation, 2: cosmic ray muon simulation
 
 namespace TPCsystem{
 	//Important: Constants changed
