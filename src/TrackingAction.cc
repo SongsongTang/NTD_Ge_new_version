@@ -50,6 +50,7 @@
 #include <iomanip>
 #include "math.h"
 #include <random>
+#include "Randomize.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 using namespace TPCsystem;
@@ -313,11 +314,9 @@ void TrackingAction::PostUserTrackingAction(const G4Track* track)
     if(LastVolumeName == "GasEff2") fNotFiltered = false;
     
     // generate random point to introduce the effect of efficiency of anticoincidence
-    std::default_random_engine generator;
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    double inefficiency = distribution(generator);
+    double inefficiency = G4UniformRand();
 
-    if (fSelectTrack && (fNotFiltered || ( inefficiency < 0 )) && fHitSV/*  && LastVolumeName != "Gas"  */ && !fReject)
+    if (fSelectTrack && (fNotFiltered || ( inefficiency < 0. )) && fHitSV/*  && LastVolumeName != "Gas"  */ && !fReject)
     {   //count conditions:
         //  this e- track does NOT cross the Al frame
         //  this track has at least part of it in the gas volume
