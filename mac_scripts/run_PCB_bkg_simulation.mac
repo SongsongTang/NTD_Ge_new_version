@@ -1,0 +1,35 @@
+#Sets some gps default verbose
+#
+/mydet/generator fGParticleSource
+/control/verbose 2
+/run/verbose 1
+/analysis/setFileName {filename}{j}_{i}
+
+# ==== from the central PCB =====
+
+/gps/particle ion
+/gps/pos/type Volume
+/gps/pos/shape Para
+/gps/pos/centre 0 0 0.115 cm
+/gps/pos/halfx 11.65 cm
+/gps/pos/halfy 11.65 cm
+/gps/pos/halfz 0.115 cm
+/gps/ang/type iso
+
+# Th-232
+/gps/ion 90 232 0 0
+/gps/energy    0
+/tracking/verbose 0
+/run/beamOn 5698
+
+# U-238
+/gps/ion 92 238 0 0
+/gps/energy    0
+/tracking/verbose 0
+/run/beamOn 3538
+
+# K-40
+/gps/ion 19 40 0 0
+/gps/energy    0
+/tracking/verbose 0
+/run/beamOn 2431

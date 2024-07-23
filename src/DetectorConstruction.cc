@@ -243,7 +243,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4double PCBsizeX = 23.3*cm;
 	G4double PCBsizeY = 23.3*cm;
 	G4double PCBdeltaY = 0*cm;
-	G4double PCBthickness = 0.23*cm;
+	G4double PCBthickness = 0.52*cm;
+	G4double CopperBoardinPCBthickness = 0.5*cm;
 
 	// parameters of Cu board
 	G4double CusizeX = PCBsizeX;
@@ -252,9 +253,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	// G4double Cuthickness = 10e-4*cm;
 	G4double Cuthickness = 10e-4*cm;
 	
-	// parameter of the Cu board below TPC
+	// parameter of the Cu board below TPC and above MM
 	G4double gap = 0*cm;
-	G4double Cuthickness2 = 1*cm;
+	G4double Cuthickness2 = 1*cm;					// Copper board thickness below TPC (including hollow volume)
+	G4double Cuboardthickness = 0.5*cm;				// actual copper board thickness (not hollow volume)
+	G4double Pbthickness1 = 2*cm;					// Pb board thickness below TPC and its copper board
+	G4double Cuthickness3 = 0.5*cm;					// Cu board thickness above anti-coincidence MM
+	G4double Pbthickness2 = 1*cm;					// Pb board thickness above MM and its copper board
 
 	// parameter of the field cage
 	G4double FieldCageSize = 16.6*cm;
@@ -268,8 +273,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4double ShellSize = 30*cm;
 	G4double ShellThickness = 2*cm;
 	G4double ShellHeight = 15*cm;
-
-	// G4double Cuthickness3 = 2*cm;
 
 	//whether to put the source under the TPC
 	G4bool IfSource = false;
@@ -285,47 +288,104 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 //=======Copper board below TPC (if exists)=====================
 
-	// G4ThreeVector positionCubrd2 = G4ThreeVector(0., CudeltaY, -TPCSizeZ-gap-0.5*Cuthickness2);	
+	G4ThreeVector positionCubrd2 = G4ThreeVector(0., CudeltaY, -TPCSizeZ-gap-0.5*Cuthickness2);	
 
-	// G4Box* solidCubrd2 = new G4Box("Cu_board2",                                    // its name
-	// 		0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Cuthickness2);                      // its size
+	G4Box* solidCubrd2 = new G4Box("Cu_board2",                                    // its name
+			0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Cuthickness2);                      // its size
 
-	// G4LogicalVolume* logicCubrd2 = new G4LogicalVolume(
-	// 		solidCubrd2,                                    // its solid
-	// 		Pb,                                    // its material
-	// 		"Cu_board2");                                      // its name
+	G4LogicalVolume* logicCubrd2 = new G4LogicalVolume(
+			solidCubrd2,                                    // its solid
+			Al,                                    // its material
+			"Cu_board2");                                      // its name
 
-	// new G4PVPlacement(
-	// 		0,                                           // no rotation
-	// 		positionCubrd2,                                 // at (0,0,0)
-	// 		logicCubrd2,                                    // its logical volume
-	// 		"Cu_board2",                                       // its name
-	// 		logicWorld,                                  // its mother  volume
-	// 		false,                                       // no boolean operation
-	// 		0);                                          // copy number
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionCubrd2,                                 // at (0,0,0)
+			logicCubrd2,                                    // its logical volume
+			"Cu_board2",                                       // its name
+			logicWorld,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
+
+	G4ThreeVector positionHollow = G4ThreeVector(0., 0, 0.5*Cuboardthickness);	
+
+	G4Box* solidHollow = new G4Box("Hollow",                                    // its name
+			0.5*FrameSizeX-Cuboardthickness, 0.5*FrameSizeY-Cuboardthickness, 0.5*(Cuthickness2-Cuboardthickness));                      // its size
+
+	G4LogicalVolume* logicHollow = new G4LogicalVolume(
+			solidHollow,                                    // its solid
+			Air,                                    // its material
+			"Hollow");                                      // its name
+
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionHollow,                                 // at (0,0,0)
+			logicHollow,                                    // its logical volume
+			"Hollow",                                       // its name
+			logicCubrd2,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
+
+	G4ThreeVector positionPbbrd_TPC = G4ThreeVector(0., CudeltaY, -TPCSizeZ-gap-Cuthickness2-0.5*Pbthickness1);	
+
+	G4Box* solidPbbrd_TPC = new G4Box("Pbboard_TPC",                                    // its name
+			0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Pbthickness1);                      // its size
+
+	G4LogicalVolume* logicPbbrd_TPC = new G4LogicalVolume(
+			solidPbbrd_TPC,                                    // its solid
+			Pb,                                    // its material
+			"Pbboard_TPC");                                      // its name
+
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionPbbrd_TPC,                                 // at (0,0,0)
+			logicPbbrd_TPC,                                    // its logical volume
+			"Pbboard_TPC",                                       // its name
+			logicWorld,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
 
 //=============================================
 
 //=======Copper board above anti-coincident detector (if exists)=====================
 
-	// G4ThreeVector positionCubrd3 = G4ThreeVector(0., CudeltaY, PCBthickness+MMSizeZ+gap+0.5*Cuthickness2);	
+	G4ThreeVector positionCubrd3 = G4ThreeVector(0., CudeltaY, PCBthickness+MMSizeZ+gap+0.5*Cuthickness3);	
 
-	// G4Box* solidCubrd3 = new G4Box("Cu_board3",                                    // its name
-	// 		0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Cuthickness2);                      // its size
+	G4Box* solidCubrd3 = new G4Box("Cu_board3",                                    // its name
+			0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Cuthickness3);                      // its size
 
-	// G4LogicalVolume* logicCubrd3 = new G4LogicalVolume(
-	// 		solidCubrd3,                                    // its solid
-	// 		Pb,                                    // its material
-	// 		"Cu_board3");                                      // its name
+	G4LogicalVolume* logicCubrd3 = new G4LogicalVolume(
+			solidCubrd3,                                    // its solid
+			Al,                                    // its material
+			"Cu_board3");                                      // its name
 
-	// new G4PVPlacement(
-	// 		0,                                           // no rotation
-	// 		positionCubrd3,                                 // at (0,0,0)
-	// 		logicCubrd3,                                    // its logical volume
-	// 		"Cu_board3",                                       // its name
-	// 		logicWorld,                                  // its mother  volume
-	// 		false,                                       // no boolean operation
-	// 		0);                                          // copy number
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionCubrd3,                                 // at (0,0,0)
+			logicCubrd3,                                    // its logical volume
+			"Cu_board3",                                       // its name
+			logicWorld,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
+
+	G4ThreeVector positionPbbrd_MM = G4ThreeVector(0., CudeltaY, PCBthickness+MMSizeZ+gap+Cuthickness3+0.5*Pbthickness2);	
+
+	G4Box* solidPbbrd_MM = new G4Box("Pbboard_MM",                                    // its name
+			0.5*FrameSizeX, 0.5*FrameSizeY, 0.5*Pbthickness2);                      // its size
+
+	G4LogicalVolume* logicPbbrd_MM = new G4LogicalVolume(
+			solidPbbrd_MM,                                    // its solid
+			Pb,                                    // its material
+			"Pbboard_MM");                                      // its name
+
+	new G4PVPlacement(
+			0,                                           // no rotation
+			positionPbbrd_MM,                                 // at (0,0,0)
+			logicPbbrd_MM,                                    // its logical volume
+			"Pbboard_MM",                                       // its name
+			logicWorld,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
 
 //=============================================
 
@@ -799,6 +859,23 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 			logicPCB,                                    // its logical volume
 			"PCB",                                       // its name
 			logicPCBFrame,                                  // its mother  volume
+			false,                                       // no boolean operation
+			0);                                          // copy number
+
+	G4Box* solidCopperBoardinPCB = new G4Box("CopperBoardinPCB",                                    // its name
+			0.5*PCBsizeX, 0.5*PCBsizeY, 0.5*CopperBoardinPCBthickness);                      // its size
+
+	G4LogicalVolume* logicCopperBoardinPCB = new G4LogicalVolume(
+			solidCopperBoardinPCB,                                    // its solid
+			Cu,                                    // its material
+			"CopperBoardinPCB");                                      // its name
+
+	new G4PVPlacement(
+			0,                                           // no rotation
+			G4ThreeVector(),                                 // at (0,0,0)
+			logicCopperBoardinPCB,                                    // its logical volume
+			"CopperBoardinPCB",                                       // its name
+			logicPCB,                                  // its mother  volume
 			false,                                       // no boolean operation
 			0);                                          // copy number
 

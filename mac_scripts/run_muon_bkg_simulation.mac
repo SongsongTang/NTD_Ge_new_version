@@ -1,0 +1,3 @@
+/analysis/setFileName muon_test
+/tracking/verbose 0
+/run/beamOn 1000
